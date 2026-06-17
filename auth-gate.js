@@ -52,7 +52,7 @@
       "display:flex",
       "align-items:center",
       "justify-content:center",
-      "background:#0f1115",
+      "background:#0f141b",
       "font-family:'Sora',system-ui,-apple-system,Segoe UI,Roboto,sans-serif",
     ].join(";")
   );
@@ -61,30 +61,30 @@
     '<form id="site-auth-form" style="' +
     [
       "width:min(360px,90vw)",
-      "background:#181b22",
-      "border:1px solid #2a2f3a",
+      "background:#161c25",
+      "border:1px solid #2a323f",
       "border-radius:14px",
       "padding:28px 26px",
       "box-shadow:0 20px 60px rgba(0,0,0,.5)",
       "text-align:center",
     ].join(";") +
     '">' +
-    '<div style="font-size:18px;font-weight:600;color:#f5f6f8;margin-bottom:6px;">Marketing Analytics Suite</div>' +
-    '<div style="font-size:13px;color:#9aa3b2;margin-bottom:18px;">Enter the site password to continue</div>' +
+    '<div style="font-size:18px;font-weight:600;color:#e6eaf0;margin-bottom:6px;">Marketing Analytics Suite</div>' +
+    '<div style="font-size:13px;color:#9aa6b6;margin-bottom:18px;">Enter the site password to continue</div>' +
     '<input id="site-auth-input" type="password" autocomplete="current-password" placeholder="Password" style="' +
     [
       "width:100%",
       "box-sizing:border-box",
       "padding:11px 13px",
       "border-radius:9px",
-      "border:1px solid #2a2f3a",
-      "background:#0f1115",
-      "color:#f5f6f8",
+      "border:1px solid #2a323f",
+      "background:#0f141b",
+      "color:#e6eaf0",
       "font-size:14px",
       "outline:none",
     ].join(";") +
     '" />' +
-    '<div id="site-auth-error" style="height:16px;margin-top:8px;font-size:12px;color:#ff6b6b;"></div>' +
+    '<div id="site-auth-error" style="height:16px;margin-top:8px;font-size:12px;color:#ef4444;"></div>' +
     '<button type="submit" style="' +
     [
       "width:100%",
@@ -92,8 +92,8 @@
       "padding:11px",
       "border:none",
       "border-radius:9px",
-      "background:#3b82f6",
-      "color:#fff",
+      "background:#5b9bff",
+      "color:#0b1220",
       "font-size:14px",
       "font-weight:600",
       "cursor:pointer",

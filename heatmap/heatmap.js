@@ -1,6 +1,6 @@
     let map;
     let markersLayer = L.layerGroup();
-    let clusterRingsLayer = L.layerGroup();
+    let heatLayer = null;
     const geocodeCache = {};
     const geocodeCacheKey = 'heatmap_geocode_cache_v1';
     const geocodeConcurrency = 8;
@@ -23,7 +23,7 @@
     let selectedCountryLayer = 'all';
     let performanceFilters = [];
     let nextPerformanceFilterId = 1;
-    const gradientStops = { low: "#d93025", mid: "#f6c343", high: "#1a9850" };
+    const gradientStops = { low: "#ef4444", mid: "#f5c451", high: "#22c55e" };
     const embedded = new URLSearchParams(window.location.search).get("embedded") === "1";
     const SHARED_UPLOAD_MESSAGE = "shared-csv-upload";
     const UI_LANGUAGE_MESSAGE = "ui-language-changed";
@@ -34,7 +34,7 @@
             metric: "HEATMAP METRIC", scale: "COLOR SCALE", viewMode: "VIEW MODE", customFilters: "CUSTOM FILTERS", addFilter: "Add filter",
             positionStatus: "POSITION STATUS", positionStatusBoth: "Both", positionStatusOpen: "Open", positionStatusClosed: "Closed",
             positionStatusOpenOnly: "Open", positionStatusClosedOnly: "Closed",
-            liveCsv: "LIVE CSV UPDATE", clusterRings: "Show area heat rings",
+            liveCsv: "LIVE CSV UPDATE", clusterRings: "Show density heat",
             countryLayer: "COUNTRY LAYER", allCountries: "All countries"
         },
         de: {
@@ -42,7 +42,7 @@
             metric: "HEATMAP-METRIK", scale: "FARBSKALA", viewMode: "ANSICHT", customFilters: "BENUTZERFILTER", addFilter: "Filter hinzufügen",
             positionStatus: "STELLENSTATUS", positionStatusBoth: "Beide", positionStatusOpen: "Offen", positionStatusClosed: "Geschlossen",
             positionStatusOpenOnly: "Offen", positionStatusClosedOnly: "Geschlossen",
-            liveCsv: "LIVE-CSV-UPDATE", clusterRings: "Flächen-Heat-Ringe anzeigen",
+            liveCsv: "LIVE-CSV-UPDATE", clusterRings: "Dichte-Heatmap anzeigen",
             countryLayer: "LÄNDER-EBENE", allCountries: "Alle Länder"
         },
         fr: {
@@ -50,7 +50,7 @@
             metric: "MÉTRIQUE HEATMAP", scale: "ÉCHELLE DE COULEUR", viewMode: "MODE D'AFFICHAGE", customFilters: "FILTRES PERSONNALISÉS", addFilter: "Ajouter un filtre",
             positionStatus: "STATUT DU POSTE", positionStatusBoth: "Les deux", positionStatusOpen: "Ouvert", positionStatusClosed: "Fermé",
             positionStatusOpenOnly: "Ouvert", positionStatusClosedOnly: "Fermé",
-            liveCsv: "MISE À JOUR CSV", clusterRings: "Afficher les anneaux de zone",
+            liveCsv: "MISE À JOUR CSV", clusterRings: "Afficher la densité",
             countryLayer: "COUCHE PAYS", allCountries: "Tous les pays"
         },
         es: {
@@ -58,7 +58,7 @@
             metric: "MÉTRICA HEATMAP", scale: "ESCALA DE COLOR", viewMode: "MODO DE VISTA", customFilters: "FILTROS PERSONALIZADOS", addFilter: "Añadir filtro",
             positionStatus: "ESTADO DE LA VACANTE", positionStatusBoth: "Ambos", positionStatusOpen: "Abierta", positionStatusClosed: "Cerrada",
             positionStatusOpenOnly: "Abierta", positionStatusClosedOnly: "Cerrada",
-            liveCsv: "ACTUALIZACIÓN CSV", clusterRings: "Mostrar anillos de zona",
+            liveCsv: "ACTUALIZACIÓN CSV", clusterRings: "Mostrar densidad",
             countryLayer: "CAPA DE PAÍS", allCountries: "Todos los países"
         },
         it: {
@@ -66,7 +66,7 @@
             metric: "METRICA HEATMAP", scale: "SCALA COLORE", viewMode: "MODALITÀ VISTA", customFilters: "FILTRI PERSONALIZZATI", addFilter: "Aggiungi filtro",
             positionStatus: "STATO DELLA POSIZIONE", positionStatusBoth: "Entrambi", positionStatusOpen: "Aperta", positionStatusClosed: "Chiusa",
             positionStatusOpenOnly: "Aperta", positionStatusClosedOnly: "Chiusa",
-            liveCsv: "AGGIORNAMENTO CSV", clusterRings: "Mostra anelli area",
+            liveCsv: "AGGIORNAMENTO CSV", clusterRings: "Mostra densità",
             countryLayer: "LIVELLO PAESE", allCountries: "Tutti i paesi"
         },
         nl: {
@@ -74,7 +74,7 @@
             metric: "HEATMAP-METRIEK", scale: "KLEURSCHAAL", viewMode: "WEERGAVE", customFilters: "AANGEPASTE FILTERS", addFilter: "Filter toevoegen",
             positionStatus: "VACATURESTATUS", positionStatusBoth: "Beide", positionStatusOpen: "Open", positionStatusClosed: "Gesloten",
             positionStatusOpenOnly: "Open", positionStatusClosedOnly: "Gesloten",
-            liveCsv: "LIVE CSV-UPDATE", clusterRings: "Toon gebieds-ringen",
+            liveCsv: "LIVE CSV-UPDATE", clusterRings: "Toon dichtheids-heatmap",
             countryLayer: "LAND-LAAG", allCountries: "Alle landen"
         }
     };
@@ -317,7 +317,12 @@
 
     window.onload = function() {
         map = L.map('map').setView([53.1, 6.4], 9);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
+        // Pane for the density heat layer: above the tiles (200) but below the
+        // overlayPane (400) where the circle markers render, so markers stay on top.
+        map.createPane('heatPane');
+        map.getPane('heatPane').style.zIndex = 350;
+        map.getPane('heatPane').style.pointerEvents = 'none';
         map.on('click', () => {
             // Background map click should only collapse the table, not clear the active city filter.
             setTableCollapsed(true);
@@ -342,6 +347,8 @@
         });
         document.getElementById('clusterRingsToggle').addEventListener('change', (event) => {
             showClusterRings = Boolean(event.target.checked);
+            const densityLegend = document.getElementById('densityLegend');
+            if (densityLegend) densityLegend.style.display = showClusterRings ? '' : 'none';
             renderMarkers();
         });
         loadGeocodeCache();
@@ -1103,64 +1110,6 @@
         return 2 * 6371 * Math.asin(Math.sqrt(h));
     }
 
-    function buildLocationClusters(locations, thresholdKm = 50) {
-        const clusters = [];
-        const visited = new Set();
-        for (let i = 0; i < locations.length; i += 1) {
-            if (visited.has(i)) continue;
-            const queue = [i];
-            visited.add(i);
-            const idxs = [];
-            while (queue.length) {
-                const current = queue.shift();
-                idxs.push(current);
-                const base = locations[current];
-                for (let j = 0; j < locations.length; j += 1) {
-                    if (visited.has(j)) continue;
-                    const other = locations[j];
-                    const km = haversineKm(base.lat, base.lng, other.lat, other.lng);
-                    if (km <= thresholdKm) {
-                        visited.add(j);
-                        queue.push(j);
-                    }
-                }
-            }
-            clusters.push(idxs.map((idx) => locations[idx]));
-        }
-        return clusters;
-    }
-
-    function buildLocationClustersByPixels(locations, pixelThreshold = 90) {
-        if (!map || typeof map.latLngToLayerPoint !== 'function') return [];
-        const points = locations.map((loc) => map.latLngToLayerPoint([Number(loc.lat || 0), Number(loc.lng || 0)]));
-        const clusters = [];
-        const visited = new Set();
-        for (let i = 0; i < locations.length; i += 1) {
-            if (visited.has(i)) continue;
-            const queue = [i];
-            visited.add(i);
-            const idxs = [];
-            while (queue.length) {
-                const current = queue.shift();
-                idxs.push(current);
-                const base = points[current];
-                for (let j = 0; j < locations.length; j += 1) {
-                    if (visited.has(j)) continue;
-                    const other = points[j];
-                    const dx = base.x - other.x;
-                    const dy = base.y - other.y;
-                    const dist = Math.sqrt((dx * dx) + (dy * dy));
-                    if (dist <= pixelThreshold) {
-                        visited.add(j);
-                        queue.push(j);
-                    }
-                }
-            }
-            clusters.push(idxs.map((idx) => locations[idx]));
-        }
-        return clusters;
-    }
-
     function median(values) {
         const clean = (Array.isArray(values) ? values : []).filter((v) => Number.isFinite(v)).sort((a, b) => a - b);
         if (!clean.length) return 0;
@@ -1169,105 +1118,41 @@
         return clean[mid];
     }
 
-    function getClusterMetricValue(cluster) {
-        if (!Array.isArray(cluster) || !cluster.length) return 0;
-        if (selectedMetric === 'ctr') {
-            const impressions = cluster.reduce((sum, loc) => sum + Number(loc.impressions || 0), 0);
-            const clicks = cluster.reduce((sum, loc) => sum + Number(loc.clicks || 0), 0);
-            return impressions > 0 ? clicks / impressions : 0;
-        }
-        if (selectedMetric === 'asr') {
-            const clicks = cluster.reduce((sum, loc) => sum + Number(loc.clicks || 0), 0);
-            const applyStarts = cluster.reduce((sum, loc) => sum + Number(loc.applyStarts || 0), 0);
-            return clicks > 0 ? applyStarts / clicks : 0;
-        }
-        if (selectedMetric === 'acr') {
-            const applyStarts = cluster.reduce((sum, loc) => sum + Number(loc.applyStarts || 0), 0);
-            const applications = cluster.reduce((sum, loc) => sum + Number(loc.apps || 0), 0);
-            return applyStarts > 0 ? applications / applyStarts : 0;
-        }
-        if (selectedMetric === 'intent') {
-            const impressions = cluster.reduce((sum, loc) => sum + Number(loc.impressions || 0), 0);
-            const clicks = cluster.reduce((sum, loc) => sum + Number(loc.clicks || 0), 0);
-            const applyStarts = cluster.reduce((sum, loc) => sum + Number(loc.applyStarts || 0), 0);
-            const ctr = impressions > 0 ? clicks / impressions : 0;
-            const asr = clicks > 0 ? applyStarts / clicks : 0;
-            return ctr * asr;
-        }
-        if (selectedMetric === 'jobs') {
-            return cluster.reduce((sum, loc) => sum + Number(loc.jobs || 0), 0);
-        }
-        if (selectedMetric === 'applyStarts') {
-            if (selectedViewMode === 'perJob') {
-                const starts = cluster.reduce((sum, loc) => sum + Number(loc.applyStarts || 0), 0);
-                const jobs = cluster.reduce((sum, loc) => sum + Number(loc.jobs || 0), 0);
-                return jobs > 0 ? starts / jobs : 0;
-            }
-            return cluster.reduce((sum, loc) => sum + Number(loc.applyStarts || 0), 0);
-        }
-        if (selectedMetric === 'spend') {
-            if (selectedViewMode === 'perJob') {
-                const spend = cluster.reduce((sum, loc) => sum + Number(loc.spend || 0), 0);
-                const jobs = cluster.reduce((sum, loc) => sum + Number(loc.jobs || 0), 0);
-                return jobs > 0 ? spend / jobs : 0;
-            }
-            return cluster.reduce((sum, loc) => sum + Number(loc.spend || 0), 0);
-        }
-        if (selectedMetric === 'clicks') {
-            if (selectedViewMode === 'perJob') {
-                const clicks = cluster.reduce((sum, loc) => sum + Number(loc.clicks || 0), 0);
-                const jobs = cluster.reduce((sum, loc) => sum + Number(loc.jobs || 0), 0);
-                return jobs > 0 ? clicks / jobs : 0;
-            }
-            return cluster.reduce((sum, loc) => sum + Number(loc.clicks || 0), 0);
-        }
-        if (selectedMetric === 'apps') {
-            if (selectedViewMode === 'perJob') {
-                const apps = cluster.reduce((sum, loc) => sum + Number(loc.apps || 0), 0);
-                const jobs = cluster.reduce((sum, loc) => sum + Number(loc.jobs || 0), 0);
-                return jobs > 0 ? apps / jobs : 0;
-            }
-            return cluster.reduce((sum, loc) => sum + Number(loc.apps || 0), 0);
-        }
-        return cluster.reduce((sum, loc) => sum + Number(getMetricValue(loc) || 0), 0);
-    }
+    // Density-heat gradient — intentionally cool->hot (blue->cyan->violet->magenta)
+    // so it reads as activity intensity and stays distinct from the red/yellow/green
+    // performance markers.
+    const HEAT_GRADIENT = {
+        0.0: 'rgba(29,78,216,0)',
+        0.25: '#1d4ed8',
+        0.5: '#06b6d4',
+        0.75: '#a855f7',
+        1.0: '#ec4899'
+    };
 
     function renderClusterRings(filteredData, referenceScale = null) {
-        clusterRingsLayer.clearLayers();
-        if (!showClusterRings || !Array.isArray(filteredData) || filteredData.length < 2) return;
-        const clusters = buildLocationClusters(filteredData, 15).filter((cluster) => cluster.length > 1);
-        if (!clusters.length) return;
-        const clusterValues = clusters.map((cluster) => getClusterMetricValue(cluster));
-        const scale = referenceScale || buildScaleInfo(clusterValues);
-        const zoomScale = 1;
-        clusters.forEach((cluster, idx) => {
-            const centroid = cluster.reduce((acc, loc) => {
-                acc.lat += Number(loc.lat || 0);
-                acc.lng += Number(loc.lng || 0);
-                return acc;
-            }, { lat: 0, lng: 0 });
-            centroid.lat /= cluster.length;
-            centroid.lng /= cluster.length;
-            const value = clusterValues[idx];
-            const scaledValue = scale.mapValue(value);
-            const ringColor = gradientColorForValue(scaledValue, scale.low, scale.high);
-            const flareLayers = [
-                { radius: Math.round(5000 * zoomScale), fillOpacity: 0.18 },
-                { radius: Math.round(10000 * zoomScale), fillOpacity: 0.10 },
-                { radius: Math.round(15000 * zoomScale), fillOpacity: 0.05 }
-            ];
-            flareLayers.forEach((layer) => {
-                const ring = L.circle([centroid.lat, centroid.lng], {
-                    radius: layer.radius,
-                    stroke: false,
-                    fillColor: ringColor,
-                    fillOpacity: layer.fillOpacity,
-                    interactive: false
-                });
-                clusterRingsLayer.addLayer(ring);
-            });
+        if (heatLayer) {
+            map.removeLayer(heatLayer);
+            heatLayer = null;
+        }
+        if (!showClusterRings || !Array.isArray(filteredData) || !filteredData.length) return;
+        // Weight each point by the selected metric, normalized 0..1 through the same
+        // scale (linear/log) the markers use, so the bloom reflects where activity
+        // concentrates. Leaflet.heat handles zoom-aware sizing on its own.
+        const scale = referenceScale || buildScaleInfo(filteredData.map((loc) => getMetricValue(loc)));
+        const span = scale.high - scale.low;
+        const points = filteredData.map((loc) => {
+            const mapped = scale.mapValue(getMetricValue(loc));
+            const intensity = span > 0 ? clamp((mapped - scale.low) / span, 0, 1) : 0.5;
+            return [Number(loc.lat || 0), Number(loc.lng || 0), intensity];
         });
-        clusterRingsLayer.addTo(map);
+        heatLayer = L.heatLayer(points, {
+            pane: 'heatPane',
+            radius: 30,
+            blur: 22,
+            max: 1,
+            minOpacity: 0.25,
+            gradient: HEAT_GRADIENT
+        }).addTo(map);
     }
 
     function enrichLocationMetrics(location) {
@@ -1305,10 +1190,12 @@
 
     function renderMarkers() {
         markersLayer.clearLayers();
-        clusterRingsLayer.clearLayers();
         const filteredData = getFilteredCampaignData();
         const sortedData = [...filteredData].sort((a, b) => getMetricValue(a) - getMetricValue(b));
-        if (!sortedData.length) return;
+        if (!sortedData.length) {
+            if (heatLayer) { map.removeLayer(heatLayer); heatLayer = null; }
+            return;
+        }
         const globalScale = buildScaleInfo(sortedData.map((loc) => getMetricValue(loc)));
         const countryScaleMap = buildCountryScaleMap(sortedData);
         lastRingData = sortedData;

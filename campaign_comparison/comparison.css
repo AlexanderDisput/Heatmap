@@ -1,33 +1,35 @@
       :root {
-        --bg: #eef4ff;
-        --card: #ffffff;
-        --line: #d6e2f4;
-        --ink: #14263c;
-        --muted: #5b6f87;
-        --blue-1: #dbe8ff;
-        --blue-2: #bcd5ff;
-        --blue-3: #93bbff;
-        --blue-4: #6a9fff;
-        --blue-5: #4689f6;
-        --blue-6: #2d75e8;
-        --good: #1f8b4c;
-        --bad: #cc2f3f;
+        /* Aliased to shared tokens in theme.css (loaded first). */
+        --bg: var(--t-bg);
+        --card: var(--t-surface);
+        --line: var(--t-border);
+        --ink: var(--t-text);
+        --muted: var(--t-muted);
+        /* Funnel ramp: single-hue ascending, dim -> bright accent (dark-tuned). */
+        --blue-1: #1c2a44;
+        --blue-2: #213a63;
+        --blue-3: #284c84;
+        --blue-4: #2f5ea6;
+        --blue-5: #3f78cf;
+        --blue-6: #5b9bff;
+        --good: var(--t-good);
+        --bad: var(--t-bad);
       }
 
       * { box-sizing: border-box; }
       body {
         margin: 0;
         padding: 10px;
-        background: radial-gradient(circle at 10% 12%, #dce9ff 0%, transparent 30%), var(--bg);
+        background: var(--t-bg);
         color: var(--ink);
         font-family: "Sora", "Avenir Next", sans-serif;
       }
 
       .shell {
         border: 1px solid var(--line);
-        border-radius: 16px;
-        background: rgba(255, 255, 255, 0.9);
-        box-shadow: 0 12px 24px rgba(19, 36, 60, 0.12);
+        border-radius: var(--r-lg);
+        background: var(--t-surface);
+        box-shadow: var(--sh-2);
         overflow: hidden;
       }
 
@@ -66,9 +68,9 @@
 
       .slot-badge {
         border: 1px solid var(--line);
-        border-radius: 999px;
+        border-radius: var(--r-pill);
         padding: 5px 10px;
-        background: #f8fbff;
+        background: var(--t-elevated);
         max-width: 260px;
         white-space: nowrap;
         overflow: hidden;
@@ -83,7 +85,7 @@
 
       .card {
         border: 1px solid var(--line);
-        border-radius: 12px;
+        border-radius: var(--r-lg);
         background: var(--card);
         padding: 12px;
       }
@@ -106,23 +108,22 @@
         align-items: center;
         gap: 12px;
         text-align: center;
-        border-radius: 10px;
+        border-radius: var(--r-md);
         padding: 10px 12px;
-        color: #0f2440;
-        border: 1px solid rgba(0, 56, 143, 0.15);
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+        color: var(--t-text);
+        border: 1px solid var(--t-border);
         transform: scaleX(0);
         transform-origin: center;
         animation: funnelGrow 360ms ease forwards;
       }
 
-      .s1 { background: linear-gradient(90deg, var(--blue-1), #eff5ff); }
-      .s2 { background: linear-gradient(90deg, var(--blue-2), #eef4ff); }
-      .s3 { background: linear-gradient(90deg, var(--blue-3), #ebf2ff); }
-      .s4 { background: linear-gradient(90deg, var(--blue-4), #e6efff); }
-      .s5 { background: linear-gradient(90deg, var(--blue-5), #d9e9ff); }
-      .s6 { background: linear-gradient(90deg, var(--blue-6), #cfe2ff); }
-      .s7 { background: linear-gradient(90deg, #1f62cd, #bdd7ff); }
+      .s1 { background: linear-gradient(90deg, var(--blue-1), var(--t-surface)); }
+      .s2 { background: linear-gradient(90deg, var(--blue-2), var(--t-surface)); }
+      .s3 { background: linear-gradient(90deg, var(--blue-3), var(--t-surface)); }
+      .s4 { background: linear-gradient(90deg, var(--blue-4), var(--t-surface)); }
+      .s5 { background: linear-gradient(90deg, var(--blue-5), var(--t-surface)); }
+      .s6 { background: linear-gradient(90deg, var(--blue-6), var(--t-surface)); }
+      .s7 { background: linear-gradient(90deg, var(--t-accent-hover), var(--t-surface)); }
 
       .stage-left {
         font-size: 13px;
@@ -145,36 +146,36 @@
 
       .delta {
         font-size: 11px;
-        border-radius: 999px;
+        border-radius: var(--r-pill);
         padding: 3px 7px;
         border: 1px solid transparent;
-        background: #eff3f9;
-        color: #4d6077;
+        background: var(--t-elevated);
+        color: var(--t-muted);
       }
 
       .delta.good {
         color: var(--good);
-        border-color: rgba(31, 139, 76, 0.25);
-        background: rgba(31, 139, 76, 0.08);
+        border-color: rgba(34, 197, 94, 0.35);
+        background: var(--t-good-soft);
       }
 
       .delta.bad {
         color: var(--bad);
-        border-color: rgba(204, 47, 63, 0.25);
-        background: rgba(204, 47, 63, 0.08);
+        border-color: rgba(239, 68, 68, 0.35);
+        background: var(--t-bad-soft);
       }
 
       .scope-toggle {
         display: inline-flex;
         border: 1px solid var(--line);
-        border-radius: 999px;
+        border-radius: var(--r-pill);
         overflow: hidden;
       }
 
       .scope-btn {
         border: none;
-        background: #f4f8ff;
-        color: #24496f;
+        background: var(--t-elevated);
+        color: var(--t-muted);
         padding: 6px 10px;
         font: inherit;
         font-size: 12px;
@@ -183,8 +184,8 @@
       }
 
       .scope-btn.active {
-        background: #003a9b;
-        color: #fff;
+        background: var(--t-accent);
+        color: var(--t-on-accent);
       }
 
       .funnel-controls {
@@ -206,7 +207,7 @@
       }
 
       th, td {
-        border-bottom: 1px solid #ebf0f8;
+        border-bottom: 1px solid var(--t-border);
         padding: 8px;
         text-align: left;
         vertical-align: top;
@@ -215,8 +216,8 @@
       th {
         font-size: 11px;
         letter-spacing: 0.02em;
-        color: #315579;
-        background: #f7faff;
+        color: var(--t-muted);
+        background: var(--t-elevated);
         position: sticky;
         top: 0;
       }
@@ -230,14 +231,14 @@
         display: block;
         margin-top: 2px;
         font-size: 10px;
-        color: #5f7590;
+        color: var(--t-faint);
       }
 
       .table-wrap {
         max-height: 88vh;
         overflow: auto;
-        border: 1px solid #e6eef9;
-        border-radius: 10px;
+        border: 1px solid var(--t-border);
+        border-radius: var(--r-md);
       }
 
       .funnel-wrap {
@@ -249,10 +250,10 @@
         right: 8px;
         bottom: 4px;
         font-size: 11px;
-        color: #5a7089;
-        background: rgba(255, 255, 255, 0.82);
-        border: 1px solid #dce8f8;
-        border-radius: 999px;
+        color: var(--t-muted);
+        background: var(--t-elevated);
+        border: 1px solid var(--t-border);
+        border-radius: var(--r-pill);
         padding: 3px 8px;
       }
 
@@ -261,18 +262,18 @@
         left: 8px;
         bottom: 4px;
         font-size: 11px;
-        color: #5a7089;
-        background: rgba(255, 255, 255, 0.82);
-        border: 1px solid #dce8f8;
-        border-radius: 999px;
+        color: var(--t-muted);
+        background: var(--t-elevated);
+        border: 1px solid var(--t-border);
+        border-radius: var(--r-pill);
         padding: 3px 8px;
       }
 
       .th-sort-btn {
-        border: 1px solid #002a70;
-        background: #003a9b;
-        color: #fff;
-        border-radius: 7px;
+        border: 1px solid transparent;
+        background: var(--t-accent);
+        color: var(--t-on-accent);
+        border-radius: var(--r-sm);
         padding: 4px 7px;
         font: inherit;
         font-size: 11px;
@@ -281,7 +282,7 @@
       }
 
       .th-sort-btn:hover {
-        background: #002f82;
+        background: var(--t-accent-hover);
       }
 
       .empty {
@@ -291,13 +292,13 @@
       }
 
       .metric-select {
-        border: 1px solid #cfe0f5;
-        border-radius: 8px;
+        border: 1px solid var(--t-border);
+        border-radius: var(--r-sm);
         padding: 6px 8px;
         font: inherit;
         font-size: 12px;
-        color: #214467;
-        background: #fff;
+        color: var(--t-text);
+        background: var(--t-elevated);
       }
 
       .kpi-grid {
@@ -308,26 +309,26 @@
       }
 
       .kpi {
-        border: 1px solid #dbe7f8;
-        background: #f8fbff;
-        border-radius: 10px;
+        border: 1px solid var(--t-border);
+        background: var(--t-surface);
+        border-radius: var(--r-md);
         padding: 8px;
       }
 
       .kpi .label {
         font-size: 11px;
-        color: #567089;
+        color: var(--t-muted);
       }
 
       .kpi .value {
         margin-top: 3px;
         font-size: 16px;
         font-weight: 800;
-        color: #173555;
+        color: var(--t-text);
       }
 
       .small-table-wrap {
-        border: 1px solid #e6eef9;
-        border-radius: 10px;
+        border: 1px solid var(--t-border);
+        border-radius: var(--r-md);
         overflow: auto;
       }

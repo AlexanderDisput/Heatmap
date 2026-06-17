@@ -1,10 +1,11 @@
       :root {
-        --bg: #edf4ff;
-        --surface: #ffffff;
-        --ink: #122235;
-        --muted: #4e647c;
-        --line: #d6e2f2;
-        --brand: #1f6fb2;
+        /* Aliased to shared tokens in theme.css (loaded first). */
+        --bg: var(--t-bg);
+        --surface: var(--t-surface);
+        --ink: var(--t-text);
+        --muted: var(--t-muted);
+        --line: var(--t-border);
+        --brand: var(--t-accent);
       }
 
       * {
@@ -15,10 +16,7 @@
         margin: 0;
         font-family: "Sora", "Avenir Next", sans-serif;
         color: var(--ink);
-        background:
-          radial-gradient(circle at 10% 12%, #dce9ff 0%, transparent 35%),
-          radial-gradient(circle at 85% 88%, #d9f0ff 0%, transparent 30%),
-          var(--bg);
+        background: var(--t-bg);
       }
 
       main {
@@ -61,8 +59,8 @@
       .benchmark-panel {
         margin: 14px 0 12px;
         border: 1px solid var(--line);
-        border-radius: 10px;
-        background: #f8fbff;
+        border-radius: var(--r-md);
+        background: var(--t-surface);
         padding: 10px;
       }
 
@@ -88,8 +86,10 @@
       .benchmark-controls input {
         width: 88px;
         margin-left: 6px;
-        border: 1px solid #003A9B;
-        border-radius: 8px;
+        border: 1px solid var(--t-border);
+        border-radius: var(--r-sm);
+        background: var(--t-elevated);
+        color: var(--t-text);
         padding: 6px 8px;
         font: inherit;
         font-size: 13px;
@@ -97,19 +97,20 @@
 
       .benchmark-controls input:focus {
         outline: none;
-        box-shadow: 0 0 0 2px rgba(0, 58, 155, 0.2);
+        border-color: var(--t-accent);
+        box-shadow: 0 0 0 2px var(--t-accent-soft);
       }
 
 
       .error {
-        color: #b91c1c;
+        color: var(--t-bad);
         font-weight: 600;
         margin: 8px 0 14px;
       }
 
       .table-wrap {
         border: 1px solid var(--line);
-        border-radius: 10px;
+        border-radius: var(--r-md);
         overflow: auto;
         background: var(--surface);
         max-height: 340px;
@@ -123,7 +124,7 @@
       thead {
         position: sticky;
         top: 0;
-        background: #eef5ff;
+        background: var(--t-elevated);
         z-index: 1;
       }
 
@@ -138,10 +139,10 @@
 
       .th-sort-btn {
         appearance: none;
-        border: 1px solid #002a70;
-        background: #003A9B;
-        color: #ffffff;
-        border-radius: 8px;
+        border: 1px solid transparent;
+        background: var(--t-accent);
+        color: var(--t-on-accent);
+        border-radius: var(--r-sm);
         padding: 4px 8px;
         font: inherit;
         font-size: 12px;
@@ -150,14 +151,13 @@
       }
 
       .th-sort-btn:hover {
-        background: #002f82;
-        box-shadow: 0 4px 10px rgba(18, 34, 53, 0.16);
+        background: var(--t-accent-hover);
       }
 
       .quadrant-shell {
         margin-top: 16px;
         border: 1px solid var(--line);
-        border-radius: 10px;
+        border-radius: var(--r-md);
         padding: 10px;
         background: var(--surface);
       }
@@ -170,8 +170,8 @@
         width: 100%;
         height: auto;
         display: block;
-        background: linear-gradient(180deg, #fbfdff, #f3f8ff);
-        border-radius: 8px;
+        background: var(--t-plot-bg);
+        border-radius: var(--r-sm);
       }
 
       .quadrant-filter-overlay {
@@ -183,10 +183,10 @@
       .quadrant-filter-btn {
         position: absolute;
         pointer-events: auto;
-        border: 1px solid #002a70;
-        border-radius: 999px;
-        background: #003A9B;
-        color: #fff;
+        border: 1px solid transparent;
+        border-radius: var(--r-pill);
+        background: var(--t-accent);
+        color: var(--t-on-accent);
         font: inherit;
         font-size: 11px;
         font-weight: 700;
@@ -196,13 +196,13 @@
       }
 
       .quadrant-filter-btn:hover {
-        background: #002f82;
-        box-shadow: 0 4px 10px rgba(18, 34, 53, 0.16);
+        background: var(--t-accent-hover);
       }
 
       .quadrant-filter-btn.active {
-        background: #0b5f35;
-        border-color: #084a2a;
+        background: var(--t-good);
+        color: var(--t-on-accent);
+        border-color: transparent;
       }
 
       .quadrant-filter-btn.q-lh { left: 8px; top: 8px; }
@@ -219,7 +219,7 @@
 
       .tile {
         border: 1px solid var(--line);
-        border-radius: 10px;
+        border-radius: var(--r-md);
         background: var(--surface);
         padding: 12px;
         position: relative;
@@ -233,7 +233,7 @@
 
       .tile-hint {
         font-size: 12px;
-        color: #355275;
+        color: var(--t-accent);
         font-weight: 600;
       }
 
@@ -241,10 +241,10 @@
         position: fixed;
         z-index: 1200;
         max-width: 380px;
-        background: #ffffff;
+        background: var(--t-elevated);
         border: 1px solid var(--line);
-        border-radius: 10px;
-        box-shadow: 0 14px 32px rgba(18, 34, 53, 0.22);
+        border-radius: var(--r-md);
+        box-shadow: var(--sh-2);
         padding: 10px 12px;
         display: none;
         pointer-events: none;
@@ -253,7 +253,7 @@
       .tile-hover-tooltip p {
         margin: 0 0 8px;
         font-size: 12px;
-        color: #223449;
+        color: var(--t-text);
       }
 
       .tile-hover-tooltip ul {
@@ -263,7 +263,7 @@
 
       .tile-hover-tooltip li {
         font-size: 12px;
-        color: #2a3d55;
+        color: var(--t-muted);
         margin-bottom: 4px;
       }
 
@@ -285,12 +285,11 @@
       }
 
       button.export {
-        border: none;
-        background: #003A9B;
-        border: 1px solid #002a70;
-        color: #fff;
+        border: 1px solid transparent;
+        background: var(--t-accent);
+        color: var(--t-on-accent);
         padding: 8px 10px;
-        border-radius: 8px;
+        border-radius: var(--r-sm);
         font-size: 12px;
         cursor: pointer;
       }
@@ -303,10 +302,11 @@
       .tooltip {
         position: fixed;
         pointer-events: none;
-        background: rgba(8, 20, 40, 0.95);
-        color: #fff;
+        background: var(--t-elevated);
+        color: var(--t-text);
+        border: 1px solid var(--t-border);
         padding: 8px 10px;
-        border-radius: 8px;
+        border-radius: var(--r-sm);
         font-size: 12px;
         line-height: 1.35;
         display: none;
@@ -323,12 +323,12 @@
       .benchmark-note {
         margin: 0 0 8px;
         font-size: 12px;
-        color: #33516e;
+        color: var(--t-muted);
         font-weight: 700;
       }
 
       .benchmark-accent {
-        color: #003A9B;
+        color: var(--t-accent);
         font-weight: 800;
       }
 

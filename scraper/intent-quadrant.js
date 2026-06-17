@@ -1070,8 +1070,8 @@
           y: margin.top,
           width: plotW,
           height: plotH,
-          fill: "#f9fcff",
-          stroke: "#dbe8f7",
+          fill: cssVar("--t-plot-bg"),
+          stroke: cssVar("--t-border"),
         });
         chart.appendChild(bg);
 
@@ -1080,7 +1080,7 @@
           x2: toX(xThreshold),
           y1: margin.top,
           y2: margin.top + plotH,
-          stroke: "#5a6a7a",
+          stroke: cssVar("--t-faint"),
           "stroke-dasharray": "6 5",
           "stroke-width": "2",
         });
@@ -1091,7 +1091,7 @@
           x2: margin.left + plotW,
           y1: toY(yThreshold),
           y2: toY(yThreshold),
-          stroke: "#5a6a7a",
+          stroke: cssVar("--t-faint"),
           "stroke-dasharray": "6 5",
           "stroke-width": "2",
         });
@@ -1103,7 +1103,7 @@
             {
               x: toX(xThreshold) + 6,
               y: margin.top + 16,
-              fill: "#334155",
+              fill: cssVar("--t-muted"),
               "font-size": "12",
             },
             `${getMetricLabel(selectedXAxisMetric)} benchmark ${pctLabel(xThreshold)}`
@@ -1116,7 +1116,7 @@
             {
               x: margin.left + 8,
               y: toY(yThreshold) - 6,
-              fill: "#334155",
+              fill: cssVar("--t-muted"),
               "font-size": "12",
             },
             `${getMetricLabel(selectedYAxisMetric)} benchmark ${pctLabel(yThreshold)}`
@@ -1129,7 +1129,7 @@
             y1: margin.top + plotH,
             x2: margin.left + plotW,
             y2: margin.top + plotH,
-            stroke: "#243447",
+            stroke: cssVar("--t-axis"),
             "stroke-width": "2",
           })
         );
@@ -1140,7 +1140,7 @@
             y1: margin.top,
             x2: margin.left,
             y2: margin.top + plotH,
-            stroke: "#243447",
+            stroke: cssVar("--t-axis"),
             "stroke-width": "2",
           })
         );
@@ -1158,7 +1158,7 @@
               {
                 x,
                 y: margin.top + plotH + 22,
-                fill: "#425466",
+                fill: cssVar("--t-faint"),
                 "font-size": "12",
                 "text-anchor": "middle",
               },
@@ -1172,7 +1172,7 @@
               {
                 x: margin.left - 10,
                 y: y + 4,
-                fill: "#425466",
+                fill: cssVar("--t-faint"),
                 "font-size": "12",
                 "text-anchor": "end",
               },
@@ -1187,7 +1187,7 @@
             {
               x: margin.left + plotW / 2,
               y: H - 12,
-              fill: "#1f2d3d",
+              fill: cssVar("--t-text"),
               "font-size": "14",
             "text-anchor": "middle",
             },
@@ -1201,7 +1201,7 @@
             {
               x: 20,
               y: margin.top + plotH / 2,
-              fill: "#1f2d3d",
+              fill: cssVar("--t-text"),
               "font-size": "14",
               transform: `rotate(-90 20 ${margin.top + plotH / 2})`,
               "text-anchor": "middle",
@@ -1222,7 +1222,7 @@
             cy,
             r: String(r.toFixed(2)),
             fill: intentColor(p.intent / maxIntent),
-            stroke: "#0d2538",
+            stroke: "rgba(255, 255, 255, 0.3)",
             "stroke-width": "1",
             opacity: "0.88",
             tabindex: "0",
@@ -1455,11 +1455,19 @@ If ASR drops significantly, refine keyword breadth.`
       }
 
       function intentColor(norm) {
+        // Cool steel-blue (low intent) -> warm bright yellow (high intent).
+        // Tuned to stay visible on the dark plot background.
         const n = Math.max(0, Math.min(1, norm));
-        const r = Math.round(255 - 80 * n);
-        const g = Math.round(230 - 120 * n);
-        const b = Math.round(120 - 80 * n);
+        const r = Math.round(90 + 155 * n);
+        const g = Math.round(140 + 60 * n);
+        const b = Math.round(180 - 100 * n);
         return `rgb(${r},${g},${b})`;
+      }
+
+      // Resolve a CSS custom property to a concrete value. SVG presentation
+      // attributes (set via setAttribute) don't reliably support var().
+      function cssVar(name) {
+        return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
       }
 
       function svgEl(tag, attrs, text) {

@@ -1,0 +1,88 @@
+/*
+ * theme.css — shared design tokens for the Marketing Analytics Suite.
+ *
+ * Single source of truth for the dark, clean-minimal design language.
+ * Included as the FIRST stylesheet on every page (./theme.css on the root
+ * shell, ../theme.css inside each tool folder), before the page's own CSS so
+ * local :root variables can alias these tokens.
+ *
+ * Aesthetic: clean & minimal — flat surfaces, 1px hairline borders, restrained
+ * shadows. Theme: dark. Density: comfortable-middle. Accent: Indeed blue is the
+ * brand anchor (--t-brand), but a lighter derived blue (--t-accent) does the
+ * interactive work since #003A9B is too dark for contrast on dark surfaces.
+ */
+
+:root {
+  /* Surfaces (low -> elevated) */
+  --t-bg: #0f141b;        /* page background (deep slate) */
+  --t-surface: #161c25;   /* cards / panels */
+  --t-elevated: #1d2531;  /* popovers, tooltips, menus */
+
+  /* Borders / hairlines */
+  --t-border: #2a323f;
+  --t-border-strong: #39414f;
+
+  /* Text */
+  --t-text: #e6eaf0;   /* primary */
+  --t-muted: #9aa6b6;  /* secondary */
+  --t-faint: #6b7686;  /* axis ticks, captions */
+
+  /* Brand + interactive accent */
+  --t-brand: #003a9b;             /* Indeed blue — identity/brand anchor */
+  --t-accent: #5b9bff;            /* interactive: buttons / links / focus */
+  --t-accent-hover: #7db0ff;
+  --t-accent-soft: rgba(91, 155, 255, 0.16); /* selection fills, brush rect */
+  --t-on-accent: #0b1220;         /* text on a solid accent button */
+
+  /* Semantic good / bad (re-tuned for dark) */
+  --t-good: #22c55e;
+  --t-bad: #ef4444;
+  --t-warn: #f5c451;
+  --t-good-soft: rgba(34, 197, 94, 0.18);
+  --t-bad-soft: rgba(239, 68, 68, 0.18);
+
+  /* Performance scale — keep red->yellow->green semantics, brightened for dark */
+  --t-scale-low: #ef4444;   /* worst */
+  --t-scale-mid: #f5c451;
+  --t-scale-high: #22c55e;  /* best */
+
+  /* Chart chrome */
+  --t-axis: #9aa6b6;
+  --t-grid: rgba(255, 255, 255, 0.08);
+  --t-plot-bg: #131a23;     /* SVG plot panel */
+
+  /* Spacing scale (comfortable-middle) */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+
+  /* Radius scale (trimmed from the old 14–18px) */
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 12px;
+  --r-pill: 999px;
+
+  /* Shadow scale (restrained) */
+  --sh-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --sh-2: 0 4px 12px rgba(0, 0, 0, 0.45);
+}
+
+/* Dark form controls + sensible defaults across all pages. */
+:root {
+  color-scheme: dark;
+}
+
+::selection {
+  background: var(--t-accent-soft);
+}
+
+/* Native widgets (selects, checkboxes, scrollbars, date pickers) render dark. */
+select,
+input,
+button,
+textarea {
+  color-scheme: dark;
+}

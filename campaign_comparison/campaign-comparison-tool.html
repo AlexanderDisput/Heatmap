@@ -6,6 +6,7 @@
     <script src="../auth-gate.js"></script>
     <title>Campaign Comparison</title>
     <link rel="icon" type="image/svg+xml" href="../favicon.svg" />
+    <link rel="stylesheet" href="../theme.css" />
     <link rel="stylesheet" href="./comparison.css" />
   </head>
   <body>
@@ -24,7 +25,7 @@
       <div class="content">
         <article class="card">
           <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
-            <h2 style="margin:0;">Funnel Comparison <span id="dataShownNote" style="font-size:12px; color:#5b6f87; font-weight:600; margin-left:8px;">Data shown: waiting for files</span></h2>
+            <h2 style="margin:0;">Funnel Comparison <span id="dataShownNote" style="font-size:12px; color:var(--t-muted); font-weight:600; margin-left:8px;">Data shown: waiting for files</span></h2>
             <div class="funnel-controls">
               <button id="reverseBtn" class="scope-btn" type="button">Reverse (A -> B)</button>
               <div class="scope-toggle">
@@ -43,7 +44,7 @@
           <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
             <h2 style="margin:0;">Efficiency & Top Drivers</h2>
             <div style="display:flex; align-items:center; gap:8px;">
-              <label for="driverMetricSelector" style="font-size:12px; color:#4f6a84; font-weight:700;">Metric</label>
+              <label for="driverMetricSelector" style="font-size:12px; color:var(--t-muted); font-weight:700;">Metric</label>
               <select id="driverMetricSelector" class="metric-select">
                 <option value="impressions">Impressions</option>
                 <option value="clicks">Clicks</option>
@@ -59,7 +60,7 @@
           <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
             <h2 style="margin:0;">Premium (Yes vs No) - Per Job Comparison</h2>
             <div style="display:flex; align-items:center; gap:8px;">
-              <label for="premiumMetricSelector" style="font-size:12px; color:#4f6a84; font-weight:700;">Metric</label>
+              <label for="premiumMetricSelector" style="font-size:12px; color:var(--t-muted); font-weight:700;">Metric</label>
               <select id="premiumMetricSelector" class="metric-select">
                 <option value="ctr">CTR</option>
                 <option value="asr">ASR</option>

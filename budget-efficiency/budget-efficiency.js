@@ -25,7 +25,12 @@
       const embedded = new URLSearchParams(window.location.search).get("embedded") === "1";
       const SHARED_UPLOAD_MESSAGE = "shared-csv-upload";
       const UI_LANGUAGE_MESSAGE = "ui-language-changed";
-      const gradientStops = { low: "#d93025", mid: "#f6c343", high: "#1a9850" };
+      const gradientStops = { low: "#ef4444", mid: "#f5c451", high: "#22c55e" };
+      // Resolve a CSS custom property to a concrete value. SVG presentation
+      // attributes (set via setAttribute) don't reliably support var(), so we
+      // resolve tokens to literals before applying them.
+      const cssVar = (name) =>
+        getComputedStyle(document.documentElement).getPropertyValue(name).trim();
       const countryCurrencyMap = {
         US: "USD", GB: "GBP", UK: "GBP", IE: "EUR", DE: "EUR", FR: "EUR", NL: "EUR", ES: "EUR", IT: "EUR", BE: "EUR",
         CH: "CHF", AT: "EUR", LU: "EUR", PT: "EUR", SE: "SEK", NO: "NOK", DK: "DKK", PL: "PLN", CZ: "CZK", HU: "HUF",
@@ -880,10 +885,10 @@
       function tableMetricColor(ratio, reverse = false) {
         const r = Math.max(0, Math.min(1, ratio));
         const t = reverse ? (1 - r) : r;
-        const green = { r: 228, g: 246, b: 235 };
-        const red = { r: 252, g: 231, b: 229 };
+        const green = { r: 34, g: 197, b: 94 };
+        const red = { r: 239, g: 68, b: 68 };
         const lerp = (a, b, v) => Math.round(a + (b - a) * v);
-        return `rgba(${lerp(green.r, red.r, t)}, ${lerp(green.g, red.g, t)}, ${lerp(green.b, red.b, t)}, 0.58)`;
+        return `rgba(${lerp(green.r, red.r, t)}, ${lerp(green.g, red.g, t)}, ${lerp(green.b, red.b, t)}, 0.28)`;
       }
 
       function drawAxisLine(x1, y1, x2, y2) {
@@ -892,7 +897,7 @@
         line.setAttribute("y1", y1);
         line.setAttribute("x2", x2);
         line.setAttribute("y2", y2);
-        line.setAttribute("stroke", "var(--axis)");
+        line.setAttribute("stroke", cssVar("--t-axis"));
         line.setAttribute("stroke-width", "1.5");
         svg.appendChild(line);
       }
@@ -902,7 +907,7 @@
         node.setAttribute("x", x);
         node.setAttribute("y", y);
         node.setAttribute("text-anchor", anchor);
-        node.setAttribute("fill", extra.fill || "var(--axis)");
+        node.setAttribute("fill", extra.fill || cssVar("--t-axis"));
         node.setAttribute("font-size", extra.size || "12");
         node.setAttribute("font-weight", extra.weight || "500");
         if (extra.rotate) node.setAttribute("transform", `rotate(${extra.rotate} ${x} ${y})`);
@@ -921,7 +926,7 @@
           vert.setAttribute("y1", margin.top);
           vert.setAttribute("x2", tx);
           vert.setAttribute("y2", margin.top + innerH);
-          vert.setAttribute("stroke", "var(--grid)");
+          vert.setAttribute("stroke", cssVar("--t-grid"));
           vert.setAttribute("stroke-width", "1");
           vert.setAttribute("stroke-dasharray", "3 5");
           svg.appendChild(vert);
@@ -931,16 +936,16 @@
           horiz.setAttribute("y1", ty);
           horiz.setAttribute("x2", margin.left + innerW);
           horiz.setAttribute("y2", ty);
-          horiz.setAttribute("stroke", "var(--grid)");
+          horiz.setAttribute("stroke", cssVar("--t-grid"));
           horiz.setAttribute("stroke-width", "1");
           horiz.setAttribute("stroke-dasharray", "3 5");
           svg.appendChild(horiz);
 
           const xTick = minX + ((maxX - minX) / ticks) * i;
-          drawText(tx, margin.top + innerH + 18, xFormatter(xTick), "middle", { fill: "#6d6559" });
+          drawText(tx, margin.top + innerH + 18, xFormatter(xTick), "middle", { fill: cssVar("--t-faint") });
 
           const yTick = minY + ((maxY - minY) / ticks) * (ticks - i);
-          drawText(margin.left - 10, ty + 4, yFormatter(yTick), "end", { fill: "#6d6559" });
+          drawText(margin.left - 10, ty + 4, yFormatter(yTick), "end", { fill: cssVar("--t-faint") });
         }
       }
 
@@ -1055,8 +1060,8 @@
         rect.setAttribute("y", String(start.y));
         rect.setAttribute("width", "0");
         rect.setAttribute("height", "0");
-        rect.setAttribute("fill", "rgba(0, 58, 155, 0.18)");
-        rect.setAttribute("stroke", "#003A9B");
+        rect.setAttribute("fill", cssVar("--t-accent-soft"));
+        rect.setAttribute("stroke", cssVar("--t-accent"));
         rect.setAttribute("stroke-width", "1");
         rect.setAttribute("stroke-dasharray", "4 4");
         rect.setAttribute("pointer-events", "none");
@@ -1137,7 +1142,7 @@
           bubble.setAttribute("r", r);
           bubble.setAttribute("fill", cpaColor(point.cpaPercentile));
           bubble.setAttribute("fill-opacity", "0.72");
-          bubble.setAttribute("stroke", "#2e2a22");
+          bubble.setAttribute("stroke", "rgba(255, 255, 255, 0.35)");
           bubble.setAttribute("stroke-width", "1.2");
 
           bubble.style.cursor = "pointer";
