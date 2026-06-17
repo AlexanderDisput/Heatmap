@@ -242,14 +242,6 @@
         .checkbox-row { display:flex; align-items:center; gap:8px; margin-top: 10px; font-size: 12px; color: var(--t-muted); font-weight: 700; }
         .checkbox-row input { width: 16px; height: 16px; accent-color: var(--t-accent); }
 
-        /* Density-heat legend (separate from the marker performance legend). */
-        .density-legend { margin-top: 12px; }
-        .density-legend-bar {
-            height: 10px; width: 100%;
-            background: linear-gradient(to right, #1d4ed8, #06b6d4, #a855f7, #ec4899);
-            margin-bottom: 5px; border-radius: 2px;
-        }
-
         /* Leaflet overrides for the dark basemap. */
         .leaflet-popup-content-wrapper,
         .leaflet-popup-tip {

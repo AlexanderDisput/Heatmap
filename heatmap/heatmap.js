@@ -1,18 +1,14 @@
     let map;
     let markersLayer = L.layerGroup();
-    let heatLayer = null;
     const geocodeCache = {};
     const geocodeCacheKey = 'heatmap_geocode_cache_v1';
     const geocodeConcurrency = 8;
     let selectedMetric = 'apps';
     let selectedScale = 'log';
     let selectedViewMode = 'total';
-    let showClusterRings = true;
     let selectedPositionStatus = 'both';
     let hasOpenUploadStatuses = false;
     let hasClosedUploadStatuses = false;
-    let lastRingData = [];
-    let lastRingScale = null;
     let activeCityFilter = '';
     let uploadedJobRows = [];
     let uploadedHeatRows = [];
@@ -34,7 +30,7 @@
             metric: "HEATMAP METRIC", scale: "COLOR SCALE", viewMode: "VIEW MODE", customFilters: "CUSTOM FILTERS", addFilter: "Add filter",
             positionStatus: "POSITION STATUS", positionStatusBoth: "Both", positionStatusOpen: "Open", positionStatusClosed: "Closed",
             positionStatusOpenOnly: "Open", positionStatusClosedOnly: "Closed",
-            liveCsv: "LIVE CSV UPDATE", clusterRings: "Show density heat",
+            liveCsv: "LIVE CSV UPDATE",
             countryLayer: "COUNTRY LAYER", allCountries: "All countries"
         },
         de: {
@@ -42,7 +38,7 @@
             metric: "HEATMAP-METRIK", scale: "FARBSKALA", viewMode: "ANSICHT", customFilters: "BENUTZERFILTER", addFilter: "Filter hinzufügen",
             positionStatus: "STELLENSTATUS", positionStatusBoth: "Beide", positionStatusOpen: "Offen", positionStatusClosed: "Geschlossen",
             positionStatusOpenOnly: "Offen", positionStatusClosedOnly: "Geschlossen",
-            liveCsv: "LIVE-CSV-UPDATE", clusterRings: "Dichte-Heatmap anzeigen",
+            liveCsv: "LIVE-CSV-UPDATE",
             countryLayer: "LÄNDER-EBENE", allCountries: "Alle Länder"
         },
         fr: {
@@ -50,7 +46,7 @@
             metric: "MÉTRIQUE HEATMAP", scale: "ÉCHELLE DE COULEUR", viewMode: "MODE D'AFFICHAGE", customFilters: "FILTRES PERSONNALISÉS", addFilter: "Ajouter un filtre",
             positionStatus: "STATUT DU POSTE", positionStatusBoth: "Les deux", positionStatusOpen: "Ouvert", positionStatusClosed: "Fermé",
             positionStatusOpenOnly: "Ouvert", positionStatusClosedOnly: "Fermé",
-            liveCsv: "MISE À JOUR CSV", clusterRings: "Afficher la densité",
+            liveCsv: "MISE À JOUR CSV",
             countryLayer: "COUCHE PAYS", allCountries: "Tous les pays"
         },
         es: {
@@ -58,7 +54,7 @@
             metric: "MÉTRICA HEATMAP", scale: "ESCALA DE COLOR", viewMode: "MODO DE VISTA", customFilters: "FILTROS PERSONALIZADOS", addFilter: "Añadir filtro",
             positionStatus: "ESTADO DE LA VACANTE", positionStatusBoth: "Ambos", positionStatusOpen: "Abierta", positionStatusClosed: "Cerrada",
             positionStatusOpenOnly: "Abierta", positionStatusClosedOnly: "Cerrada",
-            liveCsv: "ACTUALIZACIÓN CSV", clusterRings: "Mostrar densidad",
+            liveCsv: "ACTUALIZACIÓN CSV",
             countryLayer: "CAPA DE PAÍS", allCountries: "Todos los países"
         },
         it: {
@@ -66,7 +62,7 @@
             metric: "METRICA HEATMAP", scale: "SCALA COLORE", viewMode: "MODALITÀ VISTA", customFilters: "FILTRI PERSONALIZZATI", addFilter: "Aggiungi filtro",
             positionStatus: "STATO DELLA POSIZIONE", positionStatusBoth: "Entrambi", positionStatusOpen: "Aperta", positionStatusClosed: "Chiusa",
             positionStatusOpenOnly: "Aperta", positionStatusClosedOnly: "Chiusa",
-            liveCsv: "AGGIORNAMENTO CSV", clusterRings: "Mostra densità",
+            liveCsv: "AGGIORNAMENTO CSV",
             countryLayer: "LIVELLO PAESE", allCountries: "Tutti i paesi"
         },
         nl: {
@@ -74,7 +70,7 @@
             metric: "HEATMAP-METRIEK", scale: "KLEURSCHAAL", viewMode: "WEERGAVE", customFilters: "AANGEPASTE FILTERS", addFilter: "Filter toevoegen",
             positionStatus: "VACATURESTATUS", positionStatusBoth: "Beide", positionStatusOpen: "Open", positionStatusClosed: "Gesloten",
             positionStatusOpenOnly: "Open", positionStatusClosedOnly: "Gesloten",
-            liveCsv: "LIVE CSV-UPDATE", clusterRings: "Toon dichtheids-heatmap",
+            liveCsv: "LIVE CSV-UPDATE",
             countryLayer: "LAND-LAAG", allCountries: "Alle landen"
         }
     };
@@ -318,11 +314,6 @@
     window.onload = function() {
         map = L.map('map').setView([53.1, 6.4], 9);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
-        // Pane for the density heat layer: above the tiles (200) but below the
-        // overlayPane (400) where the circle markers render, so markers stay on top.
-        map.createPane('heatPane');
-        map.getPane('heatPane').style.zIndex = 350;
-        map.getPane('heatPane').style.pointerEvents = 'none';
         map.on('click', () => {
             // Background map click should only collapse the table, not clear the active city filter.
             setTableCollapsed(true);
@@ -344,12 +335,6 @@
         document.getElementById('positionStatusSelector').addEventListener('change', handlePositionStatusChange);
         document.getElementById('addPerformanceFilter').addEventListener('click', () => {
             addPerformanceFilter();
-        });
-        document.getElementById('clusterRingsToggle').addEventListener('change', (event) => {
-            showClusterRings = Boolean(event.target.checked);
-            const densityLegend = document.getElementById('densityLegend');
-            if (densityLegend) densityLegend.style.display = showClusterRings ? '' : 'none';
-            renderMarkers();
         });
         loadGeocodeCache();
         applyUiLanguage(currentLanguage);
@@ -409,7 +394,6 @@
         set("customFiltersLabel", t.customFilters);
         set("addPerformanceFilter", "+");
         set("liveCsvLabel", t.liveCsv);
-        set("clusterRingsLabel", t.clusterRings);
         set("positionStatusLabel", t.positionStatus);
         set("positionStatusBoth", t.positionStatusBoth);
         set("positionStatusOpen", t.positionStatusOpen);
@@ -1118,43 +1102,6 @@
         return clean[mid];
     }
 
-    // Density-heat gradient — intentionally cool->hot (blue->cyan->violet->magenta)
-    // so it reads as activity intensity and stays distinct from the red/yellow/green
-    // performance markers.
-    const HEAT_GRADIENT = {
-        0.0: 'rgba(29,78,216,0)',
-        0.25: '#1d4ed8',
-        0.5: '#06b6d4',
-        0.75: '#a855f7',
-        1.0: '#ec4899'
-    };
-
-    function renderClusterRings(filteredData, referenceScale = null) {
-        if (heatLayer) {
-            map.removeLayer(heatLayer);
-            heatLayer = null;
-        }
-        if (!showClusterRings || !Array.isArray(filteredData) || !filteredData.length) return;
-        // Weight each point by the selected metric, normalized 0..1 through the same
-        // scale (linear/log) the markers use, so the bloom reflects where activity
-        // concentrates. Leaflet.heat handles zoom-aware sizing on its own.
-        const scale = referenceScale || buildScaleInfo(filteredData.map((loc) => getMetricValue(loc)));
-        const span = scale.high - scale.low;
-        const points = filteredData.map((loc) => {
-            const mapped = scale.mapValue(getMetricValue(loc));
-            const intensity = span > 0 ? clamp((mapped - scale.low) / span, 0, 1) : 0.5;
-            return [Number(loc.lat || 0), Number(loc.lng || 0), intensity];
-        });
-        heatLayer = L.heatLayer(points, {
-            pane: 'heatPane',
-            radius: 30,
-            blur: 22,
-            max: 1,
-            minOpacity: 0.25,
-            gradient: HEAT_GRADIENT
-        }).addTo(map);
-    }
-
     function enrichLocationMetrics(location) {
         const impressions = Number(location.impressions || 0);
         const clicks = Number(location.clicks || 0);
@@ -1192,15 +1139,8 @@
         markersLayer.clearLayers();
         const filteredData = getFilteredCampaignData();
         const sortedData = [...filteredData].sort((a, b) => getMetricValue(a) - getMetricValue(b));
-        if (!sortedData.length) {
-            if (heatLayer) { map.removeLayer(heatLayer); heatLayer = null; }
-            return;
-        }
-        const globalScale = buildScaleInfo(sortedData.map((loc) => getMetricValue(loc)));
+        if (!sortedData.length) return;
         const countryScaleMap = buildCountryScaleMap(sortedData);
-        lastRingData = sortedData;
-        lastRingScale = globalScale;
-        renderClusterRings(sortedData, globalScale);
 
         sortedData.forEach((loc) => {
             const activeScale = countryScaleMap.get(getCountryKey(loc)) || buildScaleInfo([getMetricValue(loc)]);

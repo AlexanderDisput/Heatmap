@@ -97,10 +97,6 @@
                 <option value="all">All countries</option>
             </select>
     </div>
-    <label class="checkbox-row" for="clusterRingsToggle">
-        <input id="clusterRingsToggle" type="checkbox" checked />
-        <span id="clusterRingsLabel">Show density heat</span>
-    </label>
     <div style="margin-top: 10px;">
         <div class="label-row">
             <label id="customFiltersLabel" class="control-label" style="margin-bottom:0;">CUSTOM FILTERS</label>
@@ -113,11 +109,6 @@
         <div class="legend-labels"><span id="legendLowLabel">LOW</span><span id="legendHighLabel">HIGH</span></div>
         <div class="legend-bar"></div>
         <p id="legendHelp" style="font-size: 11px; margin: 5px 0 0 0; color: var(--t-muted);">Markers are colored by metric gradient.</p>
-        <div class="density-legend" id="densityLegend">
-            <div class="legend-labels"><span id="densityLegendLow">LOW</span><span id="densityLegendHigh">HIGH</span></div>
-            <div class="density-legend-bar"></div>
-            <p id="densityLegendHelp" style="font-size: 11px; margin: 5px 0 0 0; color: var(--t-muted);">Heat shows where activity concentrates.</p>
-        </div>
     </div>
 
     <div style="margin-top: 20px;">
@@ -138,7 +129,6 @@
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
 <script src="./heatmap.js"></script>
