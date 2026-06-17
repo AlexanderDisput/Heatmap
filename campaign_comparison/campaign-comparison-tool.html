@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="../auth-gate.js"></script>
     <title>Campaign Comparison</title>
     <link rel="icon" type="image/svg+xml" href="../favicon.svg" />
     <link rel="stylesheet" href="./comparison.css" />
@@ -53,6 +54,22 @@
           </div>
           <div id="efficiencyTile" class="kpi-grid"></div>
           <div id="driverTableWrap" class="small-table-wrap"></div>
+        </article>
+        <article class="card">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
+            <h2 style="margin:0;">Premium (Yes vs No) - Per Job Comparison</h2>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <label for="premiumMetricSelector" style="font-size:12px; color:#4f6a84; font-weight:700;">Metric</label>
+              <select id="premiumMetricSelector" class="metric-select">
+                <option value="ctr">CTR</option>
+                <option value="asr">ASR</option>
+                <option value="acr">ACR</option>
+                <option value="cpas">CPAS</option>
+                <option value="cpa">CPA</option>
+              </select>
+            </div>
+          </div>
+          <div id="premiumComparisonWrap" class="table-wrap"></div>
         </article>
         <article class="card">
           <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:10px;">

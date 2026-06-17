@@ -7,12 +7,16 @@
       let funnelBasis = "holistic";
       let tableSort = { key: "scope", dir: "asc" };
       let selectedDriverMetric = "applyStarts";
+      let selectedPremiumMetric = "asr";
 
       const stateAliases = [
         "stateregion", "state/region", "state", "region", "countyregion",
         "provincieregio", "bundeslandregion", "departementregion", "regioneprovincia", "estadoregion"
       ];
       const cityAliases = ["city", "plaats", "stadt", "ville", "citta", "ciudad"];
+      const countryAliases = ["country", "land", "pays", "paese", "pais"];
+      const jobAliases = ["job", "jobtitle", "title", "job title", "functie", "functie/titel", "stellenbezeichnung", "poste", "ruolo", "puesto"];
+      const premiumAliases = ["premium", "premiumplus", "premium plus", "premium_plus"];
       const jobCountAliases = ["jobcount", "jobs", "vacancies", "vacaturecount"];
       const metricAliases = {
         impressions: ["impressions", "impressies", "visualizzazioni", "impresiones"],
@@ -43,6 +47,15 @@
         return Number.isFinite(num) ? num : 0;
       }
 
+      function escapeHtml(value) {
+        return String(value == null ? "" : value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
       function asRate(value) {
         let num = parseNumber(value);
         if (!Number.isFinite(num)) return 0;
@@ -56,10 +69,35 @@
         return target ? row[target] : "";
       }
 
+      function normalizePremiumValue(value) {
+        const text = String(value ?? "").trim().toLowerCase();
+        if (!text) return "unknown";
+        if (["yes", "y", "true", "1", "premium", "premiumplus", "premium plus", "ja", "oui", "si"].includes(text)) return "yes";
+        if (["no", "n", "false", "0", "nein", "non"].includes(text)) return "no";
+        return "unknown";
+      }
+
+      function normalizeJobLabel(value) {
+        return String(value || "").replace(/^\s*--+\s*/, "").trim() || "Unknown Job";
+      }
+
+      function keyToken(value) {
+        return String(value || "")
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-z0-9]/g, "");
+      }
+
       function parseCsvToRows(csvText) {
         const result = Papa.parse(csvText || "", { header: true, skipEmptyLines: true });
         const rows = Array.isArray(result.data) ? result.data : [];
         const parsed = rows.map((row) => {
+          const city = String(pickField(row, cityAliases) || "").trim() || "Unknown";
+          const state = String(pickField(row, stateAliases) || "").trim() || "Unknown";
+          const country = String(pickField(row, countryAliases) || "").trim() || "Unknown";
+          const job = normalizeJobLabel(pickField(row, jobAliases));
+          const premium = normalizePremiumValue(pickField(row, premiumAliases));
           const impressions = parseNumber(pickField(row, metricAliases.impressions));
           const clicks = parseNumber(pickField(row, metricAliases.clicks));
           const applyStarts = parseNumber(pickField(row, metricAliases.applyStarts));
@@ -79,8 +117,11 @@
           if (!(asr > 0)) asr = clicks > 0 ? applyStarts / clicks : 0;
           if (!(acr > 0)) acr = applyStarts > 0 ? applies / applyStarts : 0;
           return {
-            state: String(pickField(row, stateAliases) || "").trim() || "Unknown",
-            city: String(pickField(row, cityAliases) || "").trim() || "Unknown",
+            state,
+            city,
+            country,
+            job,
+            premium,
             impressions,
             clicks,
             applyStarts,
@@ -145,6 +186,158 @@
 
       function formatSpend(value) {
         return `€${Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      }
+
+      function premiumMetricLabel(metricKey) {
+        if (metricKey === "ctr") return "CTR";
+        if (metricKey === "asr") return "ASR";
+        if (metricKey === "acr") return "ACR";
+        if (metricKey === "cpas") return "CPAS";
+        if (metricKey === "cpa") return "CPA";
+        return metricKey;
+      }
+
+      function premiumMetricValue(stats, metricKey) {
+        if (metricKey === "ctr") return Number(stats.ctr || 0);
+        if (metricKey === "asr") return Number(stats.asr || 0);
+        if (metricKey === "acr") return Number(stats.acr || 0);
+        if (metricKey === "cpas") return stats.applyStarts > 0 ? Number(stats.spend || 0) / Number(stats.applyStarts || 1) : 0;
+        if (metricKey === "cpa") return stats.applies > 0 ? Number(stats.spend || 0) / Number(stats.applies || 1) : 0;
+        return 0;
+      }
+
+      function formatPremiumMetric(metricKey, value) {
+        if (metricKey === "ctr" || metricKey === "asr" || metricKey === "acr") return formatPct(value);
+        return formatSpend(value);
+      }
+
+      function premiumLiftInfo(noValue, yesValue, metricKey) {
+        const a = Number(noValue || 0);
+        const b = Number(yesValue || 0);
+        if (!Number.isFinite(a) || !Number.isFinite(b)) return { text: "n/a", cls: "" };
+        if (a === 0) {
+          if (b === 0) return { text: "0.00%", cls: "" };
+          if (metricKey === "cpas" || metricKey === "cpa") return { text: "new", cls: "bad" };
+          return { text: "new", cls: "good" };
+        }
+        let pct = 0;
+        if (metricKey === "cpas" || metricKey === "cpa") {
+          pct = ((a - b) / Math.abs(a)) * 100;
+        } else {
+          pct = ((b - a) / Math.abs(a)) * 100;
+        }
+        if (pct > 0) return { text: `+${pct.toFixed(2)}%`, cls: "good" };
+        if (pct < 0) return { text: `${pct.toFixed(2)}%`, cls: "bad" };
+        return { text: "0.00%", cls: "" };
+      }
+
+      function aggregatePremiumByJob(rows) {
+        const map = new Map();
+        (rows || []).forEach((row) => {
+          const premium = row.premium || "unknown";
+          if (premium !== "yes" && premium !== "no") return;
+          const key = [keyToken(row.job), keyToken(row.city), keyToken(row.state), keyToken(row.country)].join("|");
+          if (!map.has(key)) {
+            map.set(key, {
+              key,
+              job: row.job || "Unknown Job",
+              city: row.city || "Unknown",
+              state: row.state || "Unknown",
+              country: row.country || "Unknown",
+              yesRows: [],
+              noRows: []
+            });
+          }
+          const target = map.get(key);
+          if (premium === "yes") target.yesRows.push(row);
+          else target.noRows.push(row);
+        });
+        return map;
+      }
+
+      function renderPremiumComparison(fileOneRows, fileTwoRows, hasApplies) {
+        const wrap = document.getElementById("premiumComparisonWrap");
+        const selector = document.getElementById("premiumMetricSelector");
+        if (!wrap || !selector) return;
+
+        const acrOption = selector.querySelector('option[value="acr"]');
+        const cpaOption = selector.querySelector('option[value="cpa"]');
+        if (acrOption) acrOption.disabled = !hasApplies;
+        if (cpaOption) cpaOption.disabled = !hasApplies;
+        if (!hasApplies && (selector.value === "acr" || selector.value === "cpa")) {
+          selector.value = "asr";
+          selectedPremiumMetric = "asr";
+        }
+        const metric = selectedPremiumMetric || selector.value || "asr";
+        if (selector.value !== metric) selector.value = metric;
+
+        const fileOneMap = aggregatePremiumByJob(fileOneRows);
+        const fileTwoMap = aggregatePremiumByJob(fileTwoRows);
+        const keys = Array.from(new Set([...fileOneMap.keys(), ...fileTwoMap.keys()]));
+        if (!keys.length) {
+          wrap.innerHTML = `<div class="empty">No Premium Yes/No values found in File 1 or File 2.</div>`;
+          return;
+        }
+
+        const rows = keys.map((key) => {
+          const one = fileOneMap.get(key) || { yesRows: [], noRows: [], job: "Unknown Job", city: "Unknown", state: "Unknown", country: "Unknown" };
+          const two = fileTwoMap.get(key) || { yesRows: [], noRows: [], job: one.job, city: one.city, state: one.state, country: one.country };
+          const oneNoStats = aggregate(one.noRows);
+          const oneYesStats = aggregate(one.yesRows);
+          const twoNoStats = aggregate(two.noRows);
+          const twoYesStats = aggregate(two.yesRows);
+          const oneNoValue = premiumMetricValue(oneNoStats, metric);
+          const oneYesValue = premiumMetricValue(oneYesStats, metric);
+          const twoNoValue = premiumMetricValue(twoNoStats, metric);
+          const twoYesValue = premiumMetricValue(twoYesStats, metric);
+          const oneLift = premiumLiftInfo(oneNoValue, oneYesValue, metric);
+          const twoLift = premiumLiftInfo(twoNoValue, twoYesValue, metric);
+          return {
+            key,
+            job: one.job || two.job || "Unknown Job",
+            city: one.city || two.city || "Unknown",
+            state: one.state || two.state || "Unknown",
+            country: one.country || two.country || "Unknown",
+            oneNoStats,
+            oneYesStats,
+            twoNoStats,
+            twoYesStats,
+            oneNoValue,
+            oneYesValue,
+            twoNoValue,
+            twoYesValue,
+            oneLift,
+            twoLift,
+            rank: Math.max(Math.abs(parseFloat(oneLift.text)) || 0, Math.abs(parseFloat(twoLift.text)) || 0)
+          };
+        }).sort((a, b) => b.rank - a.rank);
+
+        let html = `<table><thead><tr>
+          <th>Job</th>
+          <th>File 1 No (${premiumMetricLabel(metric)})</th>
+          <th>File 1 Yes (${premiumMetricLabel(metric)})</th>
+          <th>File 1 Lift</th>
+          <th>File 2 No (${premiumMetricLabel(metric)})</th>
+          <th>File 2 Yes (${premiumMetricLabel(metric)})</th>
+          <th>File 2 Lift</th>
+        </tr></thead><tbody>`;
+        rows.forEach((row) => {
+          const locationLine = `${row.city}, ${row.state} (${row.country})`;
+          html += `<tr>
+            <td>
+              ${escapeHtml(row.job)}
+              <span class="subline">${escapeHtml(locationLine)}</span>
+            </td>
+            <td>${formatPremiumMetric(metric, row.oneNoValue)}<span class="subline">jobs: ${formatCount(row.oneNoStats.jobCount)}</span></td>
+            <td>${formatPremiumMetric(metric, row.oneYesValue)}<span class="subline">jobs: ${formatCount(row.oneYesStats.jobCount)}</span></td>
+            <td><span class="delta ${row.oneLift.cls}">${row.oneLift.text}</span></td>
+            <td>${formatPremiumMetric(metric, row.twoNoValue)}<span class="subline">jobs: ${formatCount(row.twoNoStats.jobCount)}</span></td>
+            <td>${formatPremiumMetric(metric, row.twoYesValue)}<span class="subline">jobs: ${formatCount(row.twoYesStats.jobCount)}</span></td>
+            <td><span class="delta ${row.twoLift.cls}">${row.twoLift.text}</span></td>
+          </tr>`;
+        });
+        html += `</tbody></table>`;
+        wrap.innerHTML = html;
       }
 
       function metricLabel(metricKey) {
@@ -417,9 +610,11 @@
           document.getElementById("funnelChart").innerHTML = "";
           const spendContext = document.getElementById("funnelSpendContext");
           const jobContext = document.getElementById("funnelJobContext");
+          const premiumWrap = document.getElementById("premiumComparisonWrap");
           if (spendContext) spendContext.textContent = "Spend n/a";
           if (jobContext) jobContext.textContent = "Jobs n/a";
           document.getElementById("comparisonTableWrap").innerHTML = `<div class="empty">Waiting for both files.</div>`;
+          if (premiumWrap) premiumWrap.innerHTML = `<div class="empty">Waiting for both files.</div>`;
           return;
         }
         parsedOne = parseCsvToRows(slotFiles[0].text);
@@ -436,6 +631,11 @@
           (oriented.base && oriented.base.rows) || [],
           (oriented.target && oriented.target.rows) || [],
           hasApplies
+        );
+        renderPremiumComparison(
+          (parsedOne && parsedOne.rows) || [],
+          (parsedTwo && parsedTwo.rows) || [],
+          (parsedOne && parsedOne.hasApplies) || (parsedTwo && parsedTwo.hasApplies)
         );
         renderTable(
           currentScope,
@@ -517,6 +717,17 @@
             (oriented.base && oriented.base.rows) || [],
             (oriented.target && oriented.target.rows) || [],
             (oriented.base && oriented.base.hasApplies) || (oriented.target && oriented.target.hasApplies)
+          );
+        }
+      });
+
+      document.getElementById("premiumMetricSelector").addEventListener("change", (event) => {
+        selectedPremiumMetric = event.target.value || "asr";
+        if (parsedOne && parsedTwo) {
+          renderPremiumComparison(
+            (parsedOne && parsedOne.rows) || [],
+            (parsedTwo && parsedTwo.rows) || [],
+            (parsedOne && parsedOne.hasApplies) || (parsedTwo && parsedTwo.hasApplies)
           );
         }
       });

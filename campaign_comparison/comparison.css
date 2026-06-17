@@ -226,6 +226,13 @@
         margin-top: 2px;
       }
 
+      .subline {
+        display: block;
+        margin-top: 2px;
+        font-size: 10px;
+        color: #5f7590;
+      }
+
       .table-wrap {
         max-height: 88vh;
         overflow: auto;
