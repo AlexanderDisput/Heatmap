@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Campaign Comparison</title>
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg" />
+    <link rel="stylesheet" href="./comparison.css" />
+  </head>
+  <body>
+    <section class="shell">
+      <div class="head">
+        <div>
+          <h1>Campaign Comparison</h1>
+          <div class="sub">Compares file 1 vs file 2 across the full funnel</div>
+        </div>
+        <div class="slots">
+          <span id="slot1Badge" class="slot-badge">File 1: not loaded</span>
+          <span id="slot2Badge" class="slot-badge">File 2: not loaded</span>
+        </div>
+      </div>
+      <div id="status" class="status">Waiting for two uploaded files from the shared header uploader.</div>
+      <div class="content">
+        <article class="card">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
+            <h2 style="margin:0;">Funnel Comparison <span id="dataShownNote" style="font-size:12px; color:#5b6f87; font-weight:600; margin-left:8px;">Data shown: waiting for files</span></h2>
+            <div class="funnel-controls">
+              <button id="reverseBtn" class="scope-btn" type="button">Reverse (A -> B)</button>
+              <div class="scope-toggle">
+                <button id="basisHolisticBtn" class="scope-btn active" type="button">Holistic</button>
+                <button id="basisPerJobBtn" class="scope-btn" type="button">Per job</button>
+              </div>
+            </div>
+          </div>
+          <div class="funnel-wrap">
+            <div id="funnelChart" class="funnel"></div>
+            <div id="funnelSpendContext" class="funnel-spend-context"></div>
+            <div id="funnelJobContext" class="funnel-job-context"></div>
+          </div>
+        </article>
+        <article class="card">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
+            <h2 style="margin:0;">Efficiency & Top Drivers</h2>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <label for="driverMetricSelector" style="font-size:12px; color:#4f6a84; font-weight:700;">Metric</label>
+              <select id="driverMetricSelector" class="metric-select">
+                <option value="impressions">Impressions</option>
+                <option value="clicks">Clicks</option>
+                <option value="applyStarts">Apply starts</option>
+                <option value="applies">Applies</option>
+              </select>
+            </div>
+          </div>
+          <div id="efficiencyTile" class="kpi-grid"></div>
+          <div id="driverTableWrap" class="small-table-wrap"></div>
+        </article>
+        <article class="card">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:10px;">
+            <h2 style="margin:0;">Location Comparison Table</h2>
+            <div class="scope-toggle">
+              <button id="scopeStateBtn" class="scope-btn active" type="button">State wide</button>
+              <button id="scopeCityBtn" class="scope-btn" type="button">City wide</button>
+            </div>
+          </div>
+          <div id="comparisonTableWrap" class="table-wrap"></div>
+        </article>
+      </div>
+    </section>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="./comparison.js"></script>
+  </body>
+</html>

@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Marketing Analytics Suite</title>
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./shell.css" />
+  </head>
+  <body>
+    <div class="page">
+      <section class="shell">
+	        <header class="topbar">
+	          <div>
+	            <div id="suiteTitle" class="title">Marketing Analytics Suite</div>
+	            <div id="suiteSubtitle" class="subtitle">Switch between tools without leaving the page</div>
+              <div class="support-link">
+                <a class="support-btn" href="https://mail.google.com/mail/?view=cm&fs=1&to=adisput@indeed.com&su=Bug%20Report%2FFeature%20request%20-%20Marketing%20Analytics%20Suite" target="_blank" rel="noopener noreferrer">Bug Report / Feature Request</a>
+              </div>
+	          </div>
+	          <div class="shared-upload">
+	            <label id="sharedCsvLabel" for="sharedCsv">Shared CSV</label>
+	            <input id="sharedCsv" type="file" accept=".csv,text/csv" />
+	            <span id="sharedStatus" class="shared-status">Loaded demo: demo-data.csv</span>
+              <select id="languageSelector" aria-label="Language selector">
+                <option value="en">EN</option>
+                <option value="de">DE</option>
+                <option value="fr">FR</option>
+                <option value="es">ES</option>
+                <option value="it">IT</option>
+                <option value="nl">NL</option>
+              </select>
+	          </div>
+	          <div class="tabs-row">
+	            <nav class="tabs" aria-label="Feature navigation">
+	              <button id="tabBudget" class="tab active" data-view="budget">Budget Efficiency</button>
+	              <button id="tabHeatmap" class="tab" data-view="heatmap">Geo Heatmap</button>
+	              <button id="tabScraper" class="tab" data-view="scraper">Intent Quadrant</button>
+                <button id="tabComparison" class="tab" data-view="comparison">Campaign Comparison</button>
+	            </nav>
+	          </div>
+	        </header>
+        <div id="datasetToolbar" class="dataset-toolbar" aria-label="Dataset slots"></div>
+
+        <main class="viewport">
+          <section class="panel active" data-panel="budget">
+            <iframe src="./budget-efficiency/budget-efficiency-tool.html?embedded=1" title="Budget Efficiency"></iframe>
+          </section>
+          <section class="panel" data-panel="heatmap">
+            <iframe src="./heatmap/geo-heatmap.html?embedded=1" title="Geo Heatmap"></iframe>
+          </section>
+          <section class="panel" data-panel="scraper">
+            <iframe src="./scraper/intent-quadrant-tool.html?embedded=1" title="Intent Quadrant"></iframe>
+          </section>
+          <section class="panel" data-panel="comparison">
+            <iframe src="./campaign_comparison/campaign-comparison-tool.html?embedded=1" title="Campaign Comparison"></iframe>
+          </section>
+        </main>
+      </section>
+    </div>
+
+      <script src="./shared-demo-data.js"></script>
+	    <script src="./shell.js"></script>
+  </body>
+</html>

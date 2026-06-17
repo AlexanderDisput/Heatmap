@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Intent Quadrant</title>
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./intent-quadrant.css" />
+  </head>
+  <body>
+    <main>
+      <h1 id="pageTitle">Job Intent Quadrant</h1>
+      <div class="upload">
+        <label id="uploadLabel" for="csvFile">Upload CSV</label>
+        <input id="csvFile" type="file" accept=".csv" />
+        <label for="positionStatusSelector">Position status</label>
+        <select id="positionStatusSelector">
+          <option value="both">Both</option>
+          <option value="open">Open</option>
+          <option value="closed">Closed</option>
+        </select>
+      </div>
+      <p id="hintText" class="hint">
+        Required columns: job, company name, CTR, and ASR. English, NL, DE, FR, IT, and ES header variants are supported.
+      </p>
+      <div id="error" class="error" hidden></div>
+
+      <h2 id="jobsTitle">List of Jobs</h2>
+      <div class="table-wrap">
+        <table id="dataTable">
+          <thead id="tableHead"></thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+
+      <h2 id="quadrantTitle" style="margin-top: 16px">Intent Quadrant</h2>
+      <section class="benchmark-panel">
+        <p id="benchTitle" class="benchmark-title">Manual Benchmarks (Optional)</p>
+        <div class="benchmark-controls">
+          <div class="benchmark-field">
+            <label id="xAxisLabel" for="xAxisMetricSelector">X-axis metric</label>
+            <select id="xAxisMetricSelector">
+              <option value="ctr">CTR</option>
+              <option value="asr">ASR</option>
+              <option value="acr">ACR</option>
+            </select>
+          </div>
+          <div class="benchmark-field">
+            <label id="yAxisLabel" for="yAxisMetricSelector">Y-axis metric</label>
+            <select id="yAxisMetricSelector">
+              <option value="asr">ASR</option>
+              <option value="ctr">CTR</option>
+              <option value="acr">ACR</option>
+            </select>
+          </div>
+          <div class="benchmark-field">
+            <label id="xBenchLabel" for="xBenchmarkInput">X Benchmark (%)</label>
+            <input id="xBenchmarkInput" type="number" min="0" step="0.1" />
+          </div>
+          <div class="benchmark-field">
+            <label id="yBenchLabel" for="yBenchmarkInput">Y Benchmark (%)</label>
+            <input id="yBenchmarkInput" type="number" min="0" step="0.1" />
+          </div>
+        </div>
+      </section>
+
+      <div class="quadrant-shell">
+        <p id="benchmarkNotice" class="benchmark-note">Upload data to compute current medians.</p>
+        <div class="chart-wrap">
+          <svg id="chart" viewBox="0 0 1000 620" aria-label="Intent Quadrant Chart"></svg>
+          <div id="quadrantFilterOverlay" class="quadrant-filter-overlay">
+            <button id="filterQHH" class="quadrant-filter-btn q-hh" type="button">High/High</button>
+            <button id="filterQHL" class="quadrant-filter-btn q-hl" type="button">High/Low</button>
+            <button id="filterQLH" class="quadrant-filter-btn q-lh" type="button">Low/High</button>
+            <button id="filterQLL" class="quadrant-filter-btn q-ll" type="button">Low/Low</button>
+          </div>
+        </div>
+        <p id="chartLegendText" class="legend">
+          X-axis: Clickthrough intent (CTR), Y-axis: Apply start intent (ASR). Marker size and color are based on intent score = CTR * ASR.
+          Dotted reference lines use manual benchmarks when provided; otherwise dataset medians are used.
+        </p>
+      </div>
+
+      <h2 id="tilesTitle" style="margin-top: 16px">Action Tiles</h2>
+      <section class="tiles" id="tiles"></section>
+    </main>
+
+    <div id="tooltip" class="tooltip"></div>
+    <div id="tileHoverTooltip" class="tile-hover-tooltip"></div>
+
+    <script src="./intent-quadrant.js"></script>
+  </body>
+</html>
