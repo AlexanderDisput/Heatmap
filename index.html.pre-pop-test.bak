@@ -1,0 +1,884 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Budget Efficiency Frontier (CPA vs Volume)</title>
+    <style>
+      :root {
+        --bg: #edf4ff;
+        --panel: #f8fbff;
+        --tile: #ffffff;
+        --ink: #122235;
+        --muted: #4e647c;
+        --axis: #304962;
+        --grid: #d6e2f2;
+        --danger: #1d4f8c;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Sora", "Avenir Next", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 10% 20%, #dce9ff 0%, transparent 32%),
+          radial-gradient(circle at 90% 80%, #d9f0ff 0%, transparent 30%),
+          var(--bg);
+        padding: 24px;
+      }
+
+      .wrap {
+        max-width: 1120px;
+        margin: 0 auto;
+      }
+
+      .header {
+        margin-bottom: 14px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 1.8rem;
+      }
+
+      p {
+        margin: 8px 0 0;
+        color: var(--muted);
+      }
+
+      .card {
+        position: relative;
+        background: var(--panel);
+        border: 1px solid #d4e2f3;
+        border-radius: 18px;
+        box-shadow: 0 14px 30px rgba(18, 34, 53, 0.1);
+        padding: 16px;
+      }
+
+      .section-card {
+        background: var(--tile);
+        border: 1px solid #dbe7f5;
+        border-radius: 14px;
+        padding: 14px;
+      }
+
+      .section-card + .section-card {
+        margin-top: 14px;
+      }
+
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+
+      .controls input[type="file"] {
+        border: 1px solid #cddded;
+        border-radius: 10px;
+        background: #fff;
+        padding: 8px;
+      }
+
+      .status {
+        font-size: 0.92rem;
+        color: var(--muted);
+      }
+
+      svg {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+
+      .legend {
+        display: grid;
+        gap: 8px;
+        margin: 0 0 12px;
+        font-size: 0.95rem;
+        color: var(--muted);
+      }
+
+      .legend-bar {
+        height: 11px;
+        border-radius: 999px;
+        border: 1px solid #cddded;
+        background: linear-gradient(to right, #1f6fb2, #8b4aa8, #d93025);
+      }
+
+      .legend-labels {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        color: #355275;
+      }
+
+      .table-wrap {
+        margin-top: 14px;
+        overflow-x: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.92rem;
+      }
+
+      th,
+      td {
+        border-bottom: 1px solid #e3edf8;
+        text-align: left;
+        padding: 8px;
+        white-space: nowrap;
+      }
+
+      th {
+        color: var(--muted);
+        font-weight: 600;
+      }
+
+      .inefficient-row {
+        background: transparent;
+      }
+
+      .city-row td:first-child {
+        font-weight: 700;
+      }
+
+      .row-toggle {
+        width: 22px;
+        height: 22px;
+        border: 1px solid #cddded;
+        border-radius: 999px;
+        background: #fff;
+        color: #355275;
+        font-weight: 700;
+        margin-right: 8px;
+        cursor: pointer;
+      }
+
+      .legend-note {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .job-row td:first-child {
+        padding-left: 36px;
+        color: var(--muted);
+      }
+
+      .job-row.inefficient-row td:first-child {
+        color: var(--muted);
+        font-weight: 500;
+      }
+
+      .tooltip {
+        position: absolute;
+        pointer-events: none;
+        opacity: 0;
+        transform: translate(-50%, -120%);
+        transition: opacity 120ms ease;
+        background: rgba(28, 26, 23, 0.94);
+        color: #fffefc;
+        border-radius: 10px;
+        padding: 8px 10px;
+        font-size: 0.82rem;
+        line-height: 1.35;
+        white-space: nowrap;
+        z-index: 3;
+      }
+
+      @media (max-width: 768px) {
+        body {
+          padding: 12px;
+        }
+
+        h1 {
+          font-size: 1.4rem;
+        }
+      }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="header">
+        <h1>Budget Efficiency Frontier (CPA vs Volume)</h1>
+        <p>
+          X = Spend, Y = Applications, bubble size = Jobs, color = CPA percentile.
+          Red outlines indicate likely inefficient cities (high spend, low applications).
+        </p>
+      </div>
+
+      <div class="card">
+        <div class="controls">
+          <input id="csv-file" type="file" accept=".csv,text/csv" />
+          <span id="status" class="status">Showing built-in sample data. Upload a CSV to replace it.</span>
+        </div>
+        <div class="section-card">
+          <div class="legend">
+            <div class="legend-labels"><span>LOW CPA percentile</span><span>HIGH CPA percentile</span></div>
+            <div class="legend-bar"></div>
+            <div class="legend-note">Dashed line = Pareto frontier</div>
+          </div>
+          <svg id="chart" viewBox="0 0 1120 620" role="img" aria-label="Spend versus applications bubble chart"></svg>
+          <div id="tooltip" class="tooltip"></div>
+        </div>
+
+        <div class="section-card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>City / Job</th>
+                  <th>Spend ($)</th>
+                  <th>Applications</th>
+                  <th>Jobs</th>
+                  <th id="cpa-header">CPA ($)</th>
+                  <th>CPA Percentile</th>
+                  <th>Inefficient?</th>
+                </tr>
+              </thead>
+              <tbody id="table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const sampleCityData = [
+        { city: "New York", spend: 145000, applications: 1120, jobs: 74, cpa: 129.5 },
+        { city: "Los Angeles", spend: 128000, applications: 980, jobs: 68, cpa: 130.6 },
+        { city: "Chicago", spend: 101000, applications: 910, jobs: 65, cpa: 111.0 },
+        { city: "Dallas", spend: 89000, applications: 780, jobs: 59, cpa: 114.1 },
+        { city: "Houston", spend: 97000, applications: 690, jobs: 51, cpa: 140.6 },
+        { city: "Phoenix", spend: 76000, applications: 720, jobs: 56, cpa: 105.6 },
+        { city: "Philadelphia", spend: 92000, applications: 605, jobs: 44, cpa: 152.1 },
+        { city: "San Antonio", spend: 63000, applications: 610, jobs: 47, cpa: 103.3 },
+        { city: "San Diego", spend: 81000, applications: 560, jobs: 41, cpa: 144.6 },
+        { city: "Jacksonville", spend: 58000, applications: 530, jobs: 40, cpa: 109.4 },
+        { city: "Austin", spend: 84000, applications: 760, jobs: 58, cpa: 110.5 },
+        { city: "San Jose", spend: 74000, applications: 495, jobs: 38, cpa: 149.5 },
+        { city: "Columbus", spend: 52000, applications: 470, jobs: 35, cpa: 110.6 },
+        { city: "Charlotte", spend: 61000, applications: 510, jobs: 37, cpa: 119.6 },
+        { city: "Indianapolis", spend: 49000, applications: 450, jobs: 34, cpa: 108.9 },
+        { city: "Seattle", spend: 88000, applications: 530, jobs: 39, cpa: 166.0 }
+      ];
+
+      const svg = document.getElementById("chart");
+      const tableBody = document.getElementById("table-body");
+      const fileInput = document.getElementById("csv-file");
+      const statusEl = document.getElementById("status");
+      const tooltipEl = document.getElementById("tooltip");
+      const cpaHeaderEl = document.getElementById("cpa-header");
+      const embedded = new URLSearchParams(window.location.search).get("embedded") === "1";
+      const SHARED_UPLOAD_MESSAGE = "shared-csv-upload";
+      const gradientStops = { low: "#1f6fb2", mid: "#8b4aa8", high: "#d93025" };
+      let expandedCities = new Set();
+
+      const width = 1120;
+      const height = 620;
+      const margin = { top: 26, right: 40, bottom: 65, left: 88 };
+      const innerW = width - margin.left - margin.right;
+      const innerH = height - margin.top - margin.bottom;
+
+      function normalizeHeader(header) {
+        return header.trim().toLowerCase();
+      }
+
+      function percentileRank(sortedValues, value) {
+        const idx = sortedValues.indexOf(value);
+        if (idx < 0 || sortedValues.length === 1) return 50;
+        return (idx / (sortedValues.length - 1)) * 100;
+      }
+
+      function parseNumber(value) {
+        if (value == null) return null;
+        const trimmed = String(value).trim();
+        if (!trimmed) return null;
+        const normalized = trimmed.replace(/[$,%\s]/g, "").replace(/,/g, "");
+        const parsed = Number(normalized);
+        return Number.isFinite(parsed) ? parsed : null;
+      }
+
+      function escapeHtml(value) {
+        return String(value ?? "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
+      function parseCsv(text) {
+        const rows = [];
+        let row = [];
+        let field = "";
+        let inQuotes = false;
+
+        for (let i = 0; i < text.length; i += 1) {
+          const char = text[i];
+
+          if (inQuotes) {
+            if (char === '"') {
+              if (text[i + 1] === '"') {
+                field += '"';
+                i += 1;
+              } else {
+                inQuotes = false;
+              }
+            } else {
+              field += char;
+            }
+          } else if (char === '"') {
+            inQuotes = true;
+          } else if (char === ",") {
+            row.push(field);
+            field = "";
+          } else if (char === "\n") {
+            row.push(field);
+            rows.push(row);
+            row = [];
+            field = "";
+          } else if (char !== "\r") {
+            field += char;
+          }
+        }
+
+        row.push(field);
+        if (row.some((cell) => cell.length > 0)) rows.push(row);
+        return rows;
+      }
+
+      function aggregateByCity(csvText) {
+        const rows = parseCsv(csvText);
+        if (rows.length < 2) {
+          throw new Error("CSV must include headers and at least one data row.");
+        }
+
+        const headers = rows[0].map(normalizeHeader);
+        const idx = {
+          city: headers.indexOf("city"),
+          spend: headers.indexOf("spend"),
+          applies: headers.indexOf("applies"),
+          applyStarts: headers.indexOf("apply starts"),
+          cpa: headers.indexOf("cost per apply (cpa)"),
+          cpas: headers.indexOf("cost per apply start (cpas)"),
+          reference: headers.indexOf("reference #"),
+          job: headers.indexOf("job")
+        };
+
+        if (idx.city < 0 || idx.spend < 0 || (idx.applies < 0 && idx.applyStarts < 0)) {
+          throw new Error("Required headers missing. Need City, Spend, and either Applies or Apply starts.");
+        }
+
+        const rawRows = rows.slice(1).map((cells) => ({
+          city: (cells[idx.city] || "").trim(),
+          spend: parseNumber(cells[idx.spend]),
+          applies: idx.applies >= 0 ? parseNumber(cells[idx.applies]) : null,
+          applyStarts: idx.applyStarts >= 0 ? parseNumber(cells[idx.applyStarts]) : null,
+          cpa: idx.cpa >= 0 ? parseNumber(cells[idx.cpa]) : null,
+          cpas: idx.cpas >= 0 ? parseNumber(cells[idx.cpas]) : null,
+          reference: idx.reference >= 0 ? (cells[idx.reference] || "").trim() : "",
+          job: idx.job >= 0 ? (cells[idx.job] || "").trim() : ""
+        }));
+
+        const hasPositiveApplies = rawRows.some((r) => r.applies != null && r.applies > 0);
+        const hasPositiveApplyStarts = rawRows.some((r) => r.applyStarts != null && r.applyStarts > 0);
+        const defaultMetric = hasPositiveApplies || !hasPositiveApplyStarts ? "applies" : "applyStarts";
+
+        const cityMap = new Map();
+        let appliesFallbackRows = 0;
+
+        rawRows.forEach((rowData, rowIdx) => {
+          if (!rowData.city) return;
+          const spend = rowData.spend ?? 0;
+
+          let applications = null;
+          let unitCost = null;
+          if (defaultMetric === "applies") {
+            applications = rowData.applies;
+            unitCost = rowData.cpa;
+            if (applications == null && rowData.applyStarts != null) {
+              applications = rowData.applyStarts;
+              unitCost = rowData.cpas;
+              appliesFallbackRows += 1;
+            }
+          } else {
+            applications = rowData.applyStarts;
+            unitCost = rowData.cpas;
+            if (applications == null && rowData.applies != null) {
+              applications = rowData.applies;
+              unitCost = rowData.cpa;
+            }
+          }
+
+          applications = applications ?? 0;
+
+          if (!cityMap.has(rowData.city)) {
+            cityMap.set(rowData.city, {
+              city: rowData.city,
+              spend: 0,
+              applications: 0,
+              refSet: new Set(),
+              jobMap: new Map(),
+              costNumerator: 0,
+              costDenominator: 0
+            });
+          }
+
+          const current = cityMap.get(rowData.city);
+          current.spend += spend;
+          current.applications += applications;
+          if (unitCost != null && applications > 0) {
+            current.costNumerator += unitCost * applications;
+            current.costDenominator += applications;
+          }
+
+          const jobKey = rowData.reference || rowData.job;
+          if (jobKey) current.refSet.add(jobKey);
+
+          const jobLabel = rowData.job || rowData.reference || `Row ${rowIdx + 1}`;
+          if (!current.jobMap.has(jobLabel)) {
+            current.jobMap.set(jobLabel, {
+              jobTitle: jobLabel,
+              spend: 0,
+              applications: 0,
+              refSet: new Set(),
+              costNumerator: 0,
+              costDenominator: 0
+            });
+          }
+
+          const jobEntry = current.jobMap.get(jobLabel);
+          jobEntry.spend += spend;
+          jobEntry.applications += applications;
+          if (unitCost != null && applications > 0) {
+            jobEntry.costNumerator += unitCost * applications;
+            jobEntry.costDenominator += applications;
+          }
+          const refKey = rowData.reference || jobLabel;
+          if (refKey) jobEntry.refSet.add(refKey);
+        });
+
+        const cityData = Array.from(cityMap.values())
+          .map((d) => {
+            const jobRows = Array.from(d.jobMap.values())
+              .map((jobData) => ({
+                jobTitle: jobData.jobTitle,
+                spend: jobData.spend,
+                applications: jobData.applications,
+                jobs: jobData.refSet.size || 1,
+                cpa:
+                  jobData.costDenominator > 0
+                    ? jobData.costNumerator / jobData.costDenominator
+                    : jobData.applications > 0
+                      ? jobData.spend / jobData.applications
+                      : jobData.spend
+              }))
+              .filter((jobData) => jobData.spend > 0 || jobData.applications > 0)
+              .sort((a, b) => b.cpa - a.cpa);
+
+            return {
+              city: d.city,
+              spend: d.spend,
+              applications: d.applications,
+              jobs: d.refSet.size || 1,
+              cpa:
+                d.costDenominator > 0
+                  ? d.costNumerator / d.costDenominator
+                  : d.applications > 0
+                    ? d.spend / d.applications
+                    : d.spend,
+              jobRows
+            };
+          })
+          .filter((d) => d.spend > 0 || d.applications > 0)
+          .sort((a, b) => b.spend - a.spend);
+
+        if (!cityData.length) throw new Error("No usable city rows found after parsing CSV.");
+
+        const metricLabel =
+          defaultMetric === "applies"
+            ? appliesFallbackRows > 0
+              ? `Applications = Applies (fallback to Apply starts on ${appliesFallbackRows} row(s))`
+              : "Applications = Applies"
+            : "Applications = Apply starts";
+        const cpaMetricName = defaultMetric === "applies" ? "Cost per apply (CPA)" : "Cost per apply start (CPAS)";
+
+        return { cityData, metricLabel, cpaMetricName };
+      }
+
+      function hexToRgb(hex) {
+        const safeHex = hex.replace("#", "");
+        const value = parseInt(safeHex, 16);
+        return { r: (value >> 16) & 255, g: (value >> 8) & 255, b: value & 255 };
+      }
+
+      function rgbToHex(r, g, b) {
+        return `#${[r, g, b].map((x) => x.toString(16).padStart(2, "0")).join("")}`;
+      }
+
+      function blendColor(startHex, endHex, t) {
+        const start = hexToRgb(startHex);
+        const end = hexToRgb(endHex);
+        return rgbToHex(
+          Math.round(start.r + (end.r - start.r) * t),
+          Math.round(start.g + (end.g - start.g) * t),
+          Math.round(start.b + (end.b - start.b) * t)
+        );
+      }
+
+      function cpaColor(percentile) {
+        const p = Math.max(0, Math.min(100, percentile)) / 100;
+        if (p < 0.5) return blendColor(gradientStops.low, gradientStops.mid, p / 0.5);
+        return blendColor(gradientStops.mid, gradientStops.high, (p - 0.5) / 0.5);
+      }
+
+      function isOnFrontier(point, points) {
+        return !points.some((other) => {
+          const dominates =
+            other.applications >= point.applications &&
+            other.spend <= point.spend &&
+            (other.applications > point.applications || other.spend < point.spend);
+          return dominates;
+        });
+      }
+
+      function drawAxisLine(x1, y1, x2, y2) {
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", x1);
+        line.setAttribute("y1", y1);
+        line.setAttribute("x2", x2);
+        line.setAttribute("y2", y2);
+        line.setAttribute("stroke", "var(--axis)");
+        line.setAttribute("stroke-width", "1.5");
+        svg.appendChild(line);
+      }
+
+      function drawText(x, y, text, anchor = "middle", extra = {}) {
+        const node = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        node.setAttribute("x", x);
+        node.setAttribute("y", y);
+        node.setAttribute("text-anchor", anchor);
+        node.setAttribute("fill", extra.fill || "var(--axis)");
+        node.setAttribute("font-size", extra.size || "12");
+        node.setAttribute("font-weight", extra.weight || "500");
+        if (extra.rotate) node.setAttribute("transform", `rotate(${extra.rotate} ${x} ${y})`);
+        node.textContent = text;
+        svg.appendChild(node);
+      }
+
+      function drawGrid(minSpend, maxSpend, minApps, maxApps, yScaleConfig) {
+        const ticks = 6;
+        for (let i = 0; i <= ticks; i++) {
+          const tx = margin.left + (innerW / ticks) * i;
+          const ty = margin.top + (innerH / ticks) * i;
+
+          const vert = document.createElementNS("http://www.w3.org/2000/svg", "line");
+          vert.setAttribute("x1", tx);
+          vert.setAttribute("y1", margin.top);
+          vert.setAttribute("x2", tx);
+          vert.setAttribute("y2", margin.top + innerH);
+          vert.setAttribute("stroke", "var(--grid)");
+          vert.setAttribute("stroke-width", "1");
+          vert.setAttribute("stroke-dasharray", "3 5");
+          svg.appendChild(vert);
+
+          const horiz = document.createElementNS("http://www.w3.org/2000/svg", "line");
+          horiz.setAttribute("x1", margin.left);
+          horiz.setAttribute("y1", ty);
+          horiz.setAttribute("x2", margin.left + innerW);
+          horiz.setAttribute("y2", ty);
+          horiz.setAttribute("stroke", "var(--grid)");
+          horiz.setAttribute("stroke-width", "1");
+          horiz.setAttribute("stroke-dasharray", "3 5");
+          svg.appendChild(horiz);
+
+          const spendTick = Math.round(minSpend + ((maxSpend - minSpend) / ticks) * i);
+          drawText(tx, margin.top + innerH + 18, `$${spendTick.toLocaleString()}`, "middle", { fill: "#6d6559" });
+
+          const yT = 1 - i / ticks;
+          const appTick = Math.round(yScaleConfig.invert(yT));
+          drawText(margin.left - 10, ty + 4, `${appTick}`, "end", { fill: "#6d6559" });
+        }
+      }
+
+      function drawFrontier(cityData, xScale, yScale) {
+        const frontierPoints = cityData
+          .filter((d) => d.onFrontier)
+          .sort((a, b) => a.spend - b.spend);
+
+        if (frontierPoints.length < 2) return;
+
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        const d = frontierPoints
+          .map((p, i) => `${i === 0 ? "M" : "L"}${xScale(p.spend)} ${yScale(p.applications)}`)
+          .join(" ");
+
+        path.setAttribute("d", d);
+        path.setAttribute("fill", "none");
+        path.setAttribute("stroke", "#365f87");
+        path.setAttribute("stroke-width", "3");
+        path.setAttribute("stroke-linejoin", "round");
+        path.setAttribute("stroke-dasharray", "8 6");
+        svg.appendChild(path);
+      }
+
+      function showTooltip(point, x, y, metricLabel) {
+        tooltipEl.innerHTML = [
+          `<strong>${point.city}</strong>`,
+          `Spend: $${point.spend.toLocaleString()}`,
+          `Applications: ${Math.round(point.applications).toLocaleString()}`,
+          `Jobs: ${point.jobs.toLocaleString()}`,
+          `${metricLabel}: $${point.cpa.toFixed(1)}`,
+          `${metricLabel} percentile: ${Math.round(point.cpaPercentile)}th`
+        ].join("<br/>");
+        tooltipEl.style.left = `${x}px`;
+        tooltipEl.style.top = `${y}px`;
+        tooltipEl.style.opacity = "1";
+      }
+
+      function hideTooltip() {
+        tooltipEl.style.opacity = "0";
+      }
+
+      function getCardRelativeMouse(event) {
+        const cardRect = tooltipEl.parentElement.getBoundingClientRect();
+        return {
+          x: event.clientX - cardRect.left + 14,
+          y: event.clientY - cardRect.top - 10
+        };
+      }
+
+      function drawBubbles(cityData, xScale, yScale, rScale, metricLabel) {
+        cityData.forEach((point) => {
+          const x = xScale(point.spend);
+          const y = yScale(point.applications);
+          const r = rScale(point.jobs);
+
+          const bubble = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          bubble.setAttribute("cx", x);
+          bubble.setAttribute("cy", y);
+          bubble.setAttribute("r", r);
+          bubble.setAttribute("fill", cpaColor(point.cpaPercentile));
+          bubble.setAttribute("fill-opacity", "0.72");
+          bubble.setAttribute("stroke", point.inefficient ? "var(--danger)" : "#2e2a22");
+          bubble.setAttribute("stroke-width", point.inefficient ? "3" : "1.2");
+
+          bubble.style.cursor = "pointer";
+          bubble.addEventListener("mouseenter", () =>
+            showTooltip(point, x + svg.offsetLeft + 14, y + svg.offsetTop - 10, metricLabel)
+          );
+          bubble.addEventListener("mousemove", (event) => {
+            const mouse = getCardRelativeMouse(event);
+            showTooltip(point, mouse.x, mouse.y, metricLabel);
+          });
+          bubble.addEventListener("mouseleave", hideTooltip);
+          svg.appendChild(bubble);
+
+          if (point.inefficient) {
+            drawText(x + r + 6, y - r - 4, point.city, "start", { fill: "#1d4f8c", size: "12", weight: "700" });
+          }
+        });
+      }
+
+      function enrichPerformanceMetrics(points) {
+        if (!points.length) return;
+
+        const spendSorted = points.map((d) => d.spend).sort((a, b) => a - b);
+        const appSorted = points.map((d) => d.applications).sort((a, b) => a - b);
+        const cpaSorted = points.map((d) => d.cpa).sort((a, b) => a - b);
+
+        points.forEach((d) => {
+          d.cpaPercentile = percentileRank(cpaSorted, d.cpa);
+          d.spendPercentile = percentileRank(spendSorted, d.spend);
+          d.appPercentile = percentileRank(appSorted, d.applications);
+        });
+
+        points.forEach((d) => {
+          d.onFrontier = isOnFrontier(d, points);
+          d.inefficient = d.spendPercentile >= 70 && d.appPercentile <= 30 && !d.onFrontier;
+        });
+      }
+
+      function buildTable(cityData) {
+        tableBody.innerHTML = "";
+        const rows = [...cityData].sort((a, b) => b.cpa - a.cpa);
+        const validCityKeys = new Set(rows.map((row) => row.city));
+        expandedCities = new Set(Array.from(expandedCities).filter((cityKey) => validCityKeys.has(cityKey)));
+
+        rows.forEach((cityRow) => {
+          const tr = document.createElement("tr");
+          tr.classList.add("city-row");
+          if (cityRow.inefficient) tr.classList.add("inefficient-row");
+          const hasJobRows = Array.isArray(cityRow.jobRows) && cityRow.jobRows.length > 1;
+          const isExpanded = expandedCities.has(cityRow.city);
+          const toggleSymbol = hasJobRows ? (isExpanded ? "-" : "+") : "";
+          const cityLabel = hasJobRows
+            ? `<button class="row-toggle">${toggleSymbol}</button>${escapeHtml(cityRow.city)}`
+            : `${escapeHtml(cityRow.city)}`;
+
+          tr.innerHTML = `
+            <td>${cityLabel}</td>
+            <td>$${cityRow.spend.toLocaleString()}</td>
+            <td>${cityRow.applications.toLocaleString()}</td>
+            <td>${cityRow.jobs.toLocaleString()}</td>
+            <td>$${cityRow.cpa.toFixed(1)}</td>
+            <td>${Math.round(cityRow.cpaPercentile)}th</td>
+            <td>${cityRow.inefficient ? "Yes" : "No"}</td>
+          `;
+
+          tableBody.appendChild(tr);
+
+          const toggleBtn = tr.querySelector(".row-toggle");
+          if (toggleBtn && hasJobRows) {
+            toggleBtn.addEventListener("click", () => {
+              if (expandedCities.has(cityRow.city)) {
+                expandedCities.delete(cityRow.city);
+              } else {
+                expandedCities.add(cityRow.city);
+              }
+              buildTable(cityData);
+            });
+          }
+
+          if (!isExpanded || !hasJobRows) return;
+
+          cityRow.jobRows.forEach((jobRow) => {
+            const jobTr = document.createElement("tr");
+            jobTr.classList.add("job-row");
+            if (jobRow.inefficient) jobTr.classList.add("inefficient-row");
+            jobTr.innerHTML = `
+              <td>-- ${escapeHtml(jobRow.jobTitle)}</td>
+              <td>$${jobRow.spend.toLocaleString()}</td>
+              <td>${jobRow.applications.toLocaleString()}</td>
+              <td>-</td>
+              <td>$${jobRow.cpa.toFixed(1)}</td>
+              <td>${Math.round(jobRow.cpaPercentile)}th</td>
+              <td>${jobRow.inefficient ? "Yes" : "No"}</td>
+            `;
+            tableBody.appendChild(jobTr);
+          });
+        });
+      }
+
+      function percentile(values, p) {
+        if (!values.length) return 0;
+        const sorted = [...values].sort((a, b) => a - b);
+        const idx = Math.min(sorted.length - 1, Math.max(0, Math.floor((sorted.length - 1) * p)));
+        return sorted[idx];
+      }
+
+      function render(cityData, metricLabel, cpaMetricName = "CPA") {
+        svg.innerHTML = "";
+        hideTooltip();
+        cityData.forEach((cityRow) => {
+          if (!Array.isArray(cityRow.jobRows)) cityRow.jobRows = [];
+        });
+        const minSpend = Math.min(...cityData.map((d) => d.spend));
+        const maxSpend = Math.max(...cityData.map((d) => d.spend));
+        const minApps = Math.min(...cityData.map((d) => d.applications));
+        const maxApps = Math.max(...cityData.map((d) => d.applications));
+        const maxJobs = Math.max(...cityData.map((d) => d.jobs));
+
+        enrichPerformanceMetrics(cityData);
+        const allJobRows = [];
+        cityData.forEach((cityRow) => {
+          cityRow.jobRows.forEach((jobRow) => {
+            jobRow.city = cityRow.city;
+            allJobRows.push(jobRow);
+          });
+        });
+        enrichPerformanceMetrics(allJobRows);
+
+        const spendRange = maxSpend - minSpend || 1;
+        const p90Apps = percentile(cityData.map((d) => d.applications), 0.9);
+        const yUseLog = p90Apps > 0 && maxApps / p90Apps >= 1.7;
+        const yMinT = yUseLog ? Math.log1p(minApps) : minApps;
+        const yMaxT = yUseLog ? Math.log1p(maxApps) : maxApps;
+        const yRangeT = yMaxT - yMinT || 1;
+
+        function xScale(v) {
+          return margin.left + ((v - minSpend) / spendRange) * innerW;
+        }
+
+        function yScale(v) {
+          const vt = yUseLog ? Math.log1p(v) : v;
+          return margin.top + innerH - ((vt - yMinT) / yRangeT) * innerH;
+        }
+
+        function rScale(v) {
+          return 8 + (v / (maxJobs || 1)) * 20;
+        }
+
+        const yScaleConfig = {
+          invert: (t) => {
+            const vt = yMinT + t * yRangeT;
+            return yUseLog ? Math.expm1(vt) : vt;
+          }
+        };
+
+        drawGrid(minSpend, maxSpend, minApps, maxApps, yScaleConfig);
+        drawAxisLine(margin.left, margin.top + innerH, margin.left + innerW, margin.top + innerH);
+        drawAxisLine(margin.left, margin.top, margin.left, margin.top + innerH);
+        drawText(margin.left + innerW / 2, height - 16, "Spend ($)", "middle", { size: "14", weight: "600" });
+        drawText(20, margin.top + innerH / 2, yUseLog ? "Applications (log scale)" : "Applications", "middle", {
+          size: "14",
+          weight: "600",
+          rotate: -90
+        });
+        drawFrontier(cityData, xScale, yScale);
+        drawBubbles(cityData, xScale, yScale, rScale, cpaMetricName);
+        buildTable(cityData);
+        cpaHeaderEl.textContent = `${cpaMetricName} ($)`;
+        statusEl.textContent = `${metricLabel}. ${yUseLog ? "Y-axis uses log scaling to reduce outlier distortion." : "Y-axis uses linear scaling."}`;
+      }
+
+      function applyCsvText(csvText, sourceLabel) {
+        try {
+          const { cityData, metricLabel, cpaMetricName } = aggregateByCity(csvText);
+          render(cityData, `Loaded ${sourceLabel}. ${metricLabel}`, cpaMetricName);
+        } catch (error) {
+          statusEl.textContent = `Could not parse CSV: ${error.message}`;
+        }
+      }
+
+      async function handleFileSelection(event) {
+        const file = event.target.files && event.target.files[0];
+        if (!file) return;
+        const csvText = await file.text();
+        applyCsvText(csvText, file.name);
+      }
+
+      if (embedded) {
+        fileInput.style.display = "none";
+        statusEl.textContent = "Use the shared uploader in the top navigation to update this chart.";
+      }
+
+      window.addEventListener("message", (event) => {
+        const data = event.data;
+        if (!data || data.type !== SHARED_UPLOAD_MESSAGE || !data.payload || !data.payload.text) return;
+        applyCsvText(data.payload.text, `shared file ${data.payload.name || "CSV"}`);
+      });
+
+      fileInput.addEventListener("change", handleFileSelection);
+      render(
+        [...sampleCityData],
+        embedded
+          ? "Showing built-in sample data. Use the shared uploader in the top navigation to replace it."
+          : "Showing built-in sample data. Upload a CSV to replace it.",
+        "CPA"
+      );
+    </script>
+  </body>
+</html>
